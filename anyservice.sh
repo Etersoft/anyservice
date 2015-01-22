@@ -6,12 +6,12 @@ SERVDIR="/lib/systemd/system"
 init_serv(){
     SERVDIR="/lib/systemd/system"
 
-if [ -n "$1" ] ; then
-        SERVNAME="$1"
-	SERVFILE="${SERVNAME}.service"
-    else
-	help
-fi
+	if [ -n "$1" ] ; then
+		    SERVNAME="$1"
+		SERVFILE="${SERVNAME}.service"
+		else
+		help
+	fi
 
 }
 
@@ -33,44 +33,39 @@ read_config(){
 }
 
 check_conf(){
-#1) Проверить переменные что они заданы
-#2) Что они осмыленные
-# -Restart
-# -dir exist and writable 
-# -execstart
 
-if [ -r $PIDFile ] ; then
-    else
-        PIDFile=/var/run/"${SERVNAME}.pid"
-fi
+	if [ -r $PIDFile ] ; then
+		else
+		    PIDFile=/var/run/"${SERVNAME}.pid"
+	fi
 
-#TODO it needed or restart monit always?
-#if exist restart var enable monit restart 
-if [ -n $Restart ] ; then
-        MyRestart="if 5 restarts with 5 cycles then timeout"
-    else
-	MyRestart=""
-fi
+	#TODO it needed or restart monit always?
+	#if exist restart var enable monit restart 
+	if [ -n $Restart ] ; then
+		    MyRestart="if 5 restarts with 5 cycles then timeout"
+		else
+		MyRestart=""
+	fi
 
-if [ -d $WorkingDirectory ] ; then
-        
-    else
-	my_exit "Dir non exist: $WorkingDirectory "
-fi
+	if [ -d $WorkingDirectory ] ; then
+		    
+		else
+		my_exit "Dir non exist: $WorkingDirectory "
+	fi
 
-if [ -n $User ] && [ getent passwd $User ] ; then
-        
-    else
-	my_exit "Dir non exist: $WorkingDirectory "
-fi
+	if [ -n $User ] && [ getent passwd $User ] ; then
+		    
+		else
+		my_exit "Dir non exist: $WorkingDirectory "
+	fi
 
 }
 
 #TODO check if exist run and monit file
 
 create_run(){
-    RUNDIR="/usr/bin/"
-    RUNFILE="$RUNDIR/$SERVNAME"
+RUNDIR="/usr/bin/"
+RUNFILE="$RUNDIR/$SERVNAME"
 
 cat <<EOF >./$RUNFILE
 #!/bin/sh
@@ -79,14 +74,10 @@ sudo su - -c "$ExecStart" $User && echo "$!" > $PIDFile
 EOF
 
 #TODO check creating pid
-
 }
 
 create_monit(){
 MONITFILE="/etc/monit.d/$SERVNAME"
-
-#TODO create shell file with start dir
-#    cd 
 
 cat <<EOF >./$MONITFILE
 check process python with pidfile $PIDFile
@@ -95,21 +86,6 @@ check process python with pidfile $PIDFile
         stop  program = "kill `cat $PIDFile`"
         $MyRestart
 EOF
-
-
-}
-
-example_serv(){
-Type=simple
-PIDFile=/var/run/odoo.pid
-User=lav
-WorkingDirectory=/home/lav/odoo/
-ExecStart=/home/lav/odoo/odoo.py -c openerp-server.conf
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-
 }
 
 my_exit(){
@@ -124,11 +100,11 @@ help(){
 }
 
 run(){
-init_serv
-read_config
-check_conf
-create_run
-create_monit
+	init_serv
+	read_config
+	check_conf
+	create_run
+	create_monit
 }
 
 run
