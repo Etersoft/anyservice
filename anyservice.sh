@@ -18,19 +18,44 @@ read_config(){
 #    . ./$SERVFILE #not work because run file
     while IFS='=' read varname var ; do
         case "$varname" in
-	    User)   User="$var"
+	    User) User="$var"
 	    echo var $var ;;
-	    WorkingDirectory)   WorkingDirectory="$var" ;;
-	    ExecStart)      ExecStart="$var" ;;
-	    Restart)        Restart="$var" ;;
-	    PIDFile)        PIDFile="$var" ;;
+	    WorkingDirectory) WorkingDirectory="$var" ;;
+	    ExecStart) ExecStart="$var" ;;
+	    Restart) Restart="$var" ;;
+	    PIDFile) PIDFile="$var" ;;
 	    *)      echo "Unsuported systemd option $varname $var"
-;;
+
+    echo "full $varname $var $User END";;
+
 	esac
-    done <<< cat $SERVDIR/$SERVFILE | grep =
-	    	    echo "!!!!!!!!!Unsuported systemd option $varname $var $User"
+    done < $SERVDIR/$SERVFILE
+
+    echo "Empty $varname $var $User"
 
 }
+
+read_config2(){
+#    . ./$SERVFILE #not work because run file
+    while IFS='=' read varname var ; do
+        case "$varname" in
+	    User) User="$var"
+	    echo var $var ;;
+	    WorkingDirectory) WorkingDirectory="$var" ;;
+	    ExecStart) ExecStart="$var" ;;
+	    Restart) Restart="$var" ;;
+	    PIDFile) PIDFile="$var" ;;
+	    *)      echo "Unsuported systemd option $varname $var"
+
+    echo "1!!!!!!!!!Unsuported systemd option $varname $var $User END";;
+
+	esac
+    done <<< `grep '=' $SERVDIR/$SERVFILE`
+
+    echo "2!!!!!!!!!Unsuported systemd option $varname $var $User"
+
+}
+
 
 check_conf(){
 
@@ -116,4 +141,4 @@ run(){
 	create_monit
 }
 
-#run $1
+run $1
