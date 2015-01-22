@@ -1,21 +1,44 @@
 #!/bin/bash
 
-DIR
+SERVDIR="/lib/systemd/system"
 
-if [ -n "$1" ] ; then
-        SERVFILE="$1"
-    else
-	help()
-fi
-
-read_config(){
-    ./$SERVFILE
-}
 
 init_serv(){
     cd $WorkingDirectory
 
+if [ -n "$1" ] ; then
+        SERVFILE="$1"
+    else
+	help
+fi
+
 }
+
+#init_serv $1
+
+read_config(){
+#    . ./$SERVFILE
+    cat $SERVDIR/$SERVFILE | grep = | while IFS='=' read varname var ; do
+        case "$varname" in
+	    User)   User="$var" ;;
+	    WorkingDirectory)   WorkingDirectory="$var" ;;
+	    ExecStart)      ExecStart="$var" ;;
+	    Restart)        Restart="$var" ;;
+	    *)      echo "Unsuported systemd option $varname $var";;
+	esac
+    done
+
+}
+
+check_conf(){
+#1) Проверить переменные что они заданы
+#2) Что они осмыленные
+# -Restart
+# -dir exist and writable 
+# -execstart
+
+}
+
 
 create_pid(){
     
@@ -34,18 +57,9 @@ WantedBy=multi-user.target
 
 }
 
-check_conf(){
-#1) Проверить переменные что они заданы
-#2) Что они осмыленные
-# -Restart
-# -dir exist and writable 
-# -execstart
-
-}
-
 help(){
-    echo "apk-pub <git/repo> [project_name]"
-    echo "example: \$ apk-pub https://github.com/Danyboy/SpaceInvader.git SpaceInvader"
+    echo "anyservice.sh <service file name> [PATH]"
+    echo "example: \$ anyservice.sh odoo.service"
     exit 1
 }
 
