@@ -58,3 +58,19 @@ esac
 echo "NN10=$NN3"
 done < ./123
 
+while read N ; do
+case "$varname" in
+123) NN9="$var" ;;
+*) echo "non ";;
+esac
+echo "NN9=$NN3"
+done < `cat ./123`
+
+while read N ; do
+case "$varname" in
+123) User="$var" ;;
+*) echo non ;;
+esac
+echo "NN10=$NN3"
+done < `cat ./123`
+
