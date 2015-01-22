@@ -27,12 +27,14 @@ read_config(){
 	    *)      echo "Unsuported systemd option $varname $var" ;;
 	esac
     done < $SERVDIR/$SERVFILE
+#TODO grep -v ^# | grep =
+
 }
 
 check_conf(){
 
-	if [ ! -r $PIDFile ] ; then
-		    PIDFile=/var/run/"${SERVNAME}.pid"
+	if [ -n $PIDFile ] ; then
+	        PIDFile=/var/run/"${SERVNAME}.pid"
 	fi
 
 	#TODO it needed or restart monit always?
@@ -63,8 +65,9 @@ if [ ! -e $RUNFILE ] ; then
 cat <<EOF > "$RUNFILE"
 #!/bin/sh
 cd $WorkingDirectory
-sudo su - -c "$ExecStart" $User && echo "$!" > $PIDFile
+sudo su - -c "$ExecStart" $User && echo "\$!" > $PIDFile
 EOF
+chmod 755 $RUNFILE
 else
 my_exit_file $RUNFILE
 fi
@@ -82,7 +85,7 @@ cat <<EOF >"$MONITFILE"
 check process python with pidfile $PIDFile
         group daemons
         start program = "$RUNFILE"
-        stop  program = "kill `cat $PIDFile`"
+        stop  program = "kill \`cat $PIDFile\`"
         $MyRestart
 EOF
 else

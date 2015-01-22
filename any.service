@@ -7,9 +7,9 @@ After=syslog.target network.target
 [Service]
 Type=simple
 User=lav
-WorkingDirectory=/home/lav/odoo/
-ExecStart=/home/lav/odoo/odoo.py -c openerp-server.conf
-#ExecStart=/home/lav/odoo/odoo.sh
+WorkingDirectory=/home/danil/odoo/
+ExecStart=/home/danil/odoo/odoo.py -c openerp-server.conf
+#ExecStart=/home/danil/odoo/odoo.sh
 Restart=always
 
 [Install]
