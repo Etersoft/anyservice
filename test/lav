@@ -1,0 +1,60 @@
+#!/bin/bash
+
+echo 123 | while read N ; do
+ NN1=$N
+done
+echo "NN1=$NN1"
+
+echo 123 | while read N ; do
+ NN1=$N
+echo "NN2=$NN1"
+done
+
+while read N ; do
+ NN2=$N
+done <<<"$(echo 123)"
+echo "NN3=$NN2"
+
+while read N ; do
+ NN2=$N
+echo "NN4=$NN2"
+done <<<"$(echo 123)"
+
+
+while read N ; do
+ NN3=$N
+done <<<"$(echo 123 | grep -v =)"
+echo "NN5=$NN3"
+
+while read N ; do
+ NN3=$N
+echo "NN6=$NN3"
+done <<<"$(echo 123 | grep -v =)"
+
+while read N ; do
+ NN3=$N
+echo "NN7=$NN3"
+done < ./123
+
+while read N ; do
+ NN3=$N
+echo "NN8=$NN3"
+done < ./123
+
+
+while read N ; do
+case "$varname" in
+123) NN9="$var" ;;
+*) echo "non ";;
+esac
+echo "NN9=$NN3"
+done < ./123
+
+while read N ; do
+case "$varname" in
+123) User="$var" ;;
+*) echo non ;;
+esac
+echo "NN10=$NN3"
+done < ./123
+

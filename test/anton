@@ -1,0 +1,14 @@
+#!/bin/bash
+
+while IFS="=" read var1 var2
+do
+ echo $var1
+ echo $var2
+ case $var1 in
+ a) answer=$var2 ;;
+ b) answer=b$var2 ;;
+ *) answer=c$var2 ;;
+ esac
+done < ./testfile
+
+echo $answer
