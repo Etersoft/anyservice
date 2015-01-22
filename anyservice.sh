@@ -1,13 +1,10 @@
 #!/bin/bash
 
-SERVDIR="/lib/systemd/system"
-
-
 init_serv(){
-    SERVDIR="/lib/systemd/system"
+    SERVDIR="/lib/systemd/system/"
 
 	if [ -n "$1" ] ; then
-		    SERVNAME="$1"
+	    SERVNAME="$1"
 		SERVFILE="${SERVNAME}.service"
 		else
 		help
@@ -34,8 +31,7 @@ read_config(){
 
 check_conf(){
 
-	if [ -r $PIDFile ] ; then
-		else
+	if [ ! -r $PIDFile ] ; then
 		    PIDFile=/var/run/"${SERVNAME}.pid"
 	fi
 
@@ -44,18 +40,14 @@ check_conf(){
 	if [ -n $Restart ] ; then
 		    MyRestart="if 5 restarts with 5 cycles then timeout"
 		else
-		MyRestart=""
+  		MyRestart=""
 	fi
 
-	if [ -d $WorkingDirectory ] ; then
-		    
-		else
+	if [ ! -d $WorkingDirectory ] ; then
 		my_exit "Dir non exist: $WorkingDirectory "
 	fi
 
-	if [ -n $User ] && [ getent passwd $User ] ; then
-		    
-		else
+	if [ ! -n $User ] && [ getent passwd $User ] ; then
 		my_exit "Dir non exist: $WorkingDirectory "
 	fi
 
@@ -67,30 +59,44 @@ create_run(){
 RUNDIR="/usr/bin/"
 RUNFILE="$RUNDIR/$SERVNAME"
 
-cat <<EOF >./$RUNFILE
+if [ ! -e $RUNFILE ] ; then
+cat <<EOF > "$RUNFILE"
 #!/bin/sh
 cd $WorkingDirectory
 sudo su - -c "$ExecStart" $User && echo "$!" > $PIDFile
 EOF
+else
+my_exit_file $RUNFILE
+fi
 
 #TODO check creating pid
 }
 
 create_monit(){
-MONITFILE="/etc/monit.d/$SERVNAME"
+MONITDIR="/etc/monit.d/"
+MONITFILE="$MONITDIR/$SERVNAME"
+mkdir -p $MONITDIR
 
-cat <<EOF >./$MONITFILE
+if [ ! -e $MONITFILE ] ; then
+cat <<EOF >"$MONITFILE"
 check process python with pidfile $PIDFile
         group daemons
         start program = "$RUNFILE"
         stop  program = "kill `cat $PIDFile`"
         $MyRestart
 EOF
+else
+my_exit_file $MONITFILE
+fi
 }
 
 my_exit(){
     echo "$1"
     exit 1
+}
+
+my_exit_file(){
+    my_exit "File already exist $1"
 }
 
 help(){
