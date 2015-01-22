@@ -16,16 +16,19 @@ init_serv(){
 
 read_config(){
 #    . ./$SERVFILE #not work because run file
-    cat $SERVDIR/$SERVFILE | grep = | while IFS='=' read varname var ; do
+    while IFS='=' read varname var ; do
         case "$varname" in
-	    User)   User="$var" ;;
+	    User)   User="$var"
+	    echo var $var ;;
 	    WorkingDirectory)   WorkingDirectory="$var" ;;
 	    ExecStart)      ExecStart="$var" ;;
 	    Restart)        Restart="$var" ;;
 	    PIDFile)        PIDFile="$var" ;;
-	    *)      echo "Unsuported systemd option $varname $var";;
+	    *)      echo "Unsuported systemd option $varname $var"
+;;
 	esac
-    done
+    done <<< cat $SERVDIR/$SERVFILE | grep =
+	    	    echo "!!!!!!!!!Unsuported systemd option $varname $var $User"
 
 }
 
@@ -106,11 +109,11 @@ help(){
 }
 
 run(){
-	init_serv
+	init_serv $1
 	read_config
 	check_conf
 	create_run
 	create_monit
 }
 
-run
+#run $1
