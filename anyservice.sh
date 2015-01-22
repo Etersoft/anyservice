@@ -12,10 +12,7 @@ init_serv(){
 
 }
 
-#init_serv $1
-
 read_config(){
-#    . ./$SERVFILE #not work because run file
     while IFS='=' read varname var ; do
         case "$varname" in
 	    User) User="$var"
@@ -54,8 +51,6 @@ check_conf(){
 	fi
 
 }
-
-#TODO check if exist run and monit file
 
 create_run(){
 RUNDIR="/usr/bin/"
