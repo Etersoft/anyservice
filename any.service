@@ -1,0 +1,16 @@
+[Unit]
+Description=Odoo open erp system
+After=syslog.target network.target
+#Requires=postgresql.service
+#After=postgresql.service
+
+[Service]
+Type=simple
+User=lav
+WorkingDirectory=/home/lav/odoo/
+ExecStart=/home/lav/odoo/odoo.py -c openerp-server.conf
+#ExecStart=/home/lav/odoo/odoo.sh
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
