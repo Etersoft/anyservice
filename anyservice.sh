@@ -4,6 +4,7 @@ RETVAL=1
 
 init_serv(){
     SERVDIR="/etc/systemd-lite"
+    mkdir -p $SERVDIR
 
     SERVNAME="$1"
     SERVFILE="${SERVNAME}.service"
@@ -25,6 +26,7 @@ read_config(){
 	    *)     false && echo "Unsuported systemd option $varname $var" ;;
 	esac
     done < $SERVDIR/$SERVFILE
+#No need this, because no match in case
 #TODO grep -v ^# | grep =
 
 }
@@ -61,12 +63,16 @@ RUNFILE="$RUNDIR/$SERVNAME"
 mkdir -p $LOGDIR
 mkdir -p $RUNDIR
 
+#TODO
+#sudo su - -c "$ExecStart" $User >> $LOGDIR/$SERVNAME.log 2>1& && echo "\$!" > $PIDFile
+
 
 if [ ! -e $RUNFILE ] ; then
 cat <<EOF > "$RUNFILE"
 #!/bin/sh
 cd $WorkingDirectory
-sudo su - -c "$ExecStart" $User &>> $LOGDIR/$SERVNAME.log && echo "\$!" > $PIDFile
+chown $User $LOGDIR/$SERVNAME.log $PIDFile &> /dev/null
+sudo su - -c "$ExecStart" $User >> $LOGDIR/$SERVNAME.log 2>&1 & echo "\$!" > $PIDFile
 EOF
 chmod 755 $RUNFILE
 else
@@ -83,7 +89,7 @@ mkdir -p $MONITDIR
 
 if [ ! -e $MONITFILE ] ; then
 cat <<EOF >"$MONITFILE"
-check process python with pidfile $PIDFile
+check process $SERVNAME with pidfile $PIDFile
         group daemons
         start program = "$RUNFILE"
         stop  program = "kill \`cat $PIDFile\`"
