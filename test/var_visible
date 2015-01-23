@@ -1,0 +1,16 @@
+#!/bin/bash
+
+one="one"
+three="three"
+
+my_one(){
+one="two"
+two="two"
+local three="two"
+echo "1 one $one two $two three $three"
+}
+
+my_one
+
+echo "2 one $one two $two three $three"
+
