@@ -66,7 +66,7 @@ if [ ! -e $RUNFILE ] ; then
 cat <<EOF > "$RUNFILE"
 #!/bin/sh
 cd $WorkingDirectory
-sudo su - -c "$ExecStart" $User >> $LOGDIR/$SERVNAME.log && echo "\$!" > $PIDFile
+sudo su - -c "$ExecStart" $User &>> $LOGDIR/$SERVNAME.log && echo "\$!" > $PIDFile
 EOF
 chmod 755 $RUNFILE
 else
