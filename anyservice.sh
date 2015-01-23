@@ -1,14 +1,16 @@
 #!/bin/bash
 
-init_serv(){
-    SERVDIR="/lib/systemd/system/"
+RETVAL=1
 
-	if [ -n "$1" ] ; then
-	    SERVNAME="$1"
-		SERVFILE="${SERVNAME}.service"
-		else
-		help
-	fi
+init_serv(){
+    SERVDIR="/etc/systemd-lite"
+
+    SERVNAME="$1"
+    SERVFILE="${SERVNAME}.service"
+
+    if ! [ -n "$SERVNAME" ] && ! [ -e "$SERVFILE" ] ; then
+        help
+    fi
 
 }
 
@@ -89,7 +91,7 @@ fi
 
 my_exit(){
     echo "$1"
-    exit 1
+    exit $RETVAL
 }
 
 my_exit_file(){
@@ -97,17 +99,52 @@ my_exit_file(){
 }
 
 help(){
-    echo "anyservice.sh <service file name> [PATH]"
-    echo "example: \$ anyservice.sh odoo"
+    echo "anyservice.sh <service file name>"
+    echo "example: put service file to $SERVDIR and run \$ anyservice.sh odoo"
     my_exit
 }
 
 mydone(){
-    my_exit "All done, now you may run monit: monit start $SERVNAME"
+    if [ -e $MONITFILE ] && [ -e $RUNFILE ] ; then
+	RETVAL=0
+        my_exit "All done, now you may run monit: monit start $SERVNAME"
+    else 
+	exit $RETVAL
+    fi
+}
+
+monit_install(){
+    epmi -y monit
+}
+
+start_service(){
+    monit start $SERVNAME
+}
+
+stop_service(){
+    monit stop $SERVNAME
+}
+
+my_getopts(){
+while getopts “start:stop:” OPTION
+do
+     case $OPTION in
+         start)
+	    start_service
+	    ;;
+         stop)
+	    stop_service
+            ;;
+         ?)
+             help
+             ;;
+     esac
+done
 }
 
 run(){
 	init_serv $1
+#	my_getopts $2
 	read_config
 	check_conf
 	create_run
@@ -115,4 +152,4 @@ run(){
 	mydone
 }
 
-run $1
+run $1 $2
