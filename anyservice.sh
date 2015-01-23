@@ -55,13 +55,18 @@ check_conf(){
 
 create_run(){
 RUNDIR="/usr/bin/"
+LOGDIR="/var/log/$SERVNAME/"
 RUNFILE="$RUNDIR/$SERVNAME"
+
+mkdir -p $LOGDIR
+mkdir -p $RUNDIR
+
 
 if [ ! -e $RUNFILE ] ; then
 cat <<EOF > "$RUNFILE"
 #!/bin/sh
 cd $WorkingDirectory
-sudo su - -c "$ExecStart" $User && echo "\$!" > $PIDFile
+sudo su - -c "$ExecStart" $User >> $LOGDIR/$SERVNAME.log && echo "\$!" > $PIDFile
 EOF
 chmod 755 $RUNFILE
 else
@@ -100,7 +105,7 @@ my_exit_file(){
 
 help(){
     echo "anyservice.sh <service file name>"
-    echo "example: put service file to $SERVDIR and run \$ anyservice.sh odoo"
+    echo "example: put service file to $SERVDIR and run # anyservice.sh odoo"
     my_exit
 }
 
