@@ -92,7 +92,7 @@ cat <<EOF >"$MONITFILE"
 check process $SERVNAME with pidfile $PIDFile
         group daemons
         start program = "$RUNFILE"
-        stop  program = "kill \`cat $PIDFile\`"
+        stop  program = "/bin/kill \`cat $PIDFile\`"
         $MyRestart
 EOF
 else
@@ -161,6 +161,9 @@ run(){
 	create_run
 	create_monit
 	mydone
+#TODO need test it:
+	monit_install
+	start_service
 }
 
 run $1 $2
