@@ -1,6 +1,7 @@
 #!/bin/bash
 
 RETVAL=1
+MYMONIT="monit"
 
 init_serv(){
     SERVDIR="/etc/systemd-lite"
@@ -57,20 +58,6 @@ check_conf(){
 
 }
 
-serv_run(){
-    LOGDIR="/var/log/$SERVNAME/"
-    mkdir -p $LOGDIR
-
-    #TODO rewrite with /sbin/start-stop-daemon
-    cd $WorkingDirectory
-    /sbin/start-stop-daemon --start --chuid $User --pidfile $PIDFile --background --make-pidfile --exec $ExecStart >> $LOGDIR/$SERVNAME.log
-    cd -
-}
-
-serv_stop(){
-    /sbin/start-stop-daemon --stop --pidfile $PIDFile
-}
-
 create_monit(){
 MONITDIR="/etc/monit.d/"
 MONITFILE="$MONITDIR/$SERVNAME"
@@ -120,28 +107,45 @@ mydone(){
 }
 
 monit_install(){
-    epmi -y monit
+    epmi -y $MYMONIT
 }
 
+serv_run(){
+    LOGDIR="/var/log/$SERVNAME/"
+    mkdir -p $LOGDIR
+
+    #TODO rewrite with /sbin/start-stop-daemon
+    cd $WorkingDirectory
+    /sbin/start-stop-daemon --start --chuid $User --pidfile $PIDFile --background --make-pidfile --exec $ExecStart >> $LOGDIR/$SERVNAME.log
+    cd -
+}
+
+serv_stop(){
+    /sbin/start-stop-daemon --stop --pidfile $PIDFile
+}
+
+
+
 start_service(){
-    echo "monit start $SERVNAME"
-    monit monitor $SERVNAME
-    monit start $SERVNAME
+    echo "$MYMONIT start $SERVNAME"
+    $MYMONIT monitor $SERVNAME
+#TODO is need start after monitor?
+    $MYMONIT start $SERVNAME
     RETVAL="$?"
     my_exit
 }
 
 stop_service(){
-    echo "monit stop $SERVNAME"
-    monit stop $SERVNAME
+    echo "$MYMONIT stop $SERVNAME"
+    $MYMONIT stop $SERVNAME
     RETVAL="$?"
     my_exit
 }
 
 status_service(){
-    echo "monit status $SERVNAME"
+    echo "$MYMONIT status $SERVNAME"
 #TODO close monit bug: show status of all monitored service
-    monit status $SERVNAME
+    $MYMONIT status $SERVNAME
     RETVAL="$?"
     my_exit
 }
