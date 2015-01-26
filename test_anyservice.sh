@@ -17,4 +17,14 @@ echo myWorkingDirectory $WorkingDirectory
 
 test_work(){
 
+my_test_service="mysleep"
+
+./anyservice.sh $my_test_service
+
+cat /usr/bin/"$my_test_service"*
+
+cat /etc/monit.d/"$my_test_service"*
+
+monit status "$my_test_service"
 }
+
