@@ -52,9 +52,10 @@ check_conf(){
 #		my_exit "Dir non exist: $WorkingDirectory "
 	fi
 
-	if [ -n $User ] && [ getent passwd $User ] ; then
-		my_exit "User non exist: $User "
-	fi
+#TODO check whis
+#	if [ -n $User ] && [ getent passwd $User ] ; then
+#		my_exit "User non exist: $User "
+#	fi
 
 }
 
