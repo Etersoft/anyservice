@@ -107,7 +107,8 @@ mydone(){
 }
 
 monit_install(){
-    epmi -y $MYMONIT
+    #TODO change $MYMONIT to $MONITPACKAGE
+    epmq $MYMONIT || epmi -y $MYMONIT
 }
 
 serv_run(){
@@ -123,8 +124,6 @@ serv_run(){
 serv_stop(){
     /sbin/start-stop-daemon --stop --pidfile $PIDFile
 }
-
-
 
 start_service(){
     echo "$MYMONIT start $SERVNAME"
