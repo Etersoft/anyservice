@@ -186,9 +186,6 @@ run(){
 	my_getopts $2
 	read_config
 	check_conf
-	create_run
-	create_monit
-	create_stop
 #TODO need test it:
 	monit_install
 	start_service
