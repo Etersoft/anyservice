@@ -138,6 +138,12 @@ stop_service(){
 }
 
 my_getopts(){
+if ! [ -n $1 ] ; then 
+    my_exit
+fi
+
+#TODO not work. getopts work only with one letter options. example: -x
+
 while getopts “start:stop:” OPTION
 do
      case $OPTION in
@@ -156,12 +162,12 @@ done
 
 run(){
 	init_serv $1
+#	my_getopts $2
 	read_config
 	check_conf
 	create_run
 	create_monit
 	mydone
-	my_getopts $2
 #TODO need test it:
 	monit_install
 	start_service
