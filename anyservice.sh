@@ -59,6 +59,7 @@ check_conf(){
 
 RUNDIR="/usr/bin/"
 RUNFILE="$RUNDIR/$SERVNAME"
+RUNFILEEXEC=$RUNFILE-exec
 LOGDIR="/var/log/$SERVNAME/"
 create_run(){
 
@@ -66,14 +67,22 @@ mkdir -p $LOGDIR
 mkdir -p $RUNDIR
 
 if [ ! -e $RUNFILE ] ; then
+cat <<EOF > "$RUNFILEEXEC"
+#!/bin/sh
+$ExecStart >> $LOGDIR/$SERVNAME.log 2>&1 &
+echo \$! > $PIDFile
+EOF
+
 cat <<EOF > "$RUNFILE"
 #!/bin/sh
 cd $WorkingDirectory
 chown $User $LOGDIR/$SERVNAME.log $PIDFile &> /dev/null
-sudo su - -c "$ExecStart" $User >> $LOGDIR/$SERVNAME.log 2>&1 & echo "\$!" > $PIDFile
+sudo su -c "$RUNFILEEXEC" $User
 EOF
+
 #TODO move echo on next line
 chmod 755 $RUNFILE
+chmod 755 $RUNFILEEXEC
 else
 my_exit_file $RUNFILE
 fi
@@ -84,7 +93,7 @@ create_stop(){
 if [ ! -e $STOPFILE ] ; then
 cat <<EOF > "$STOPFILE"
 #!/bin/sh
-/bin/kill `cat $PIDFile`
+/bin/kill \`cat $PIDFile\`
 EOF
 chmod 755 $STOPFILE
 else
@@ -112,9 +121,9 @@ fi
 }
 
 remove_service(){
-    rm -f "$MONITFILE" "$RUNFILE" "$STOPFILE"
+    rm -f "$MONITFILE" "$RUNFILE" "$RUNFILEEXEC" "$STOPFILE"
     RETVAL="$?"
-    my_exit "Files removed $MONITFILE $RUNFILE $STOPFILE"
+    my_exit "Files removed $MONITFILE $RUNFILE "$RUNFILEEXEC" $STOPFILE"
 }
 
 my_exit(){
@@ -133,7 +142,7 @@ help(){
 }
 
 mydone(){
-    if [ -e $MONITFILE ] && [ -e $RUNFILE ] && [ -e $STOPFILE ] ; then
+    if [ -e $MONITFILE ] && [ -e $RUNFILE ] && [ -e $RUNFILEEXEC ] && [ -e $STOPFILE ] ; then
 	RETVAL=0
         my_exit "All done, now you may run monit: monit status $SERVNAME"
     else 
@@ -202,10 +211,10 @@ run(){
 	create_run
 	create_monit
 	create_stop
-	mydone
 #TODO need test it:
 	monit_install
 	start_service
+	mydone
 }
 
 run $1 $2
