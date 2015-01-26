@@ -57,49 +57,19 @@ check_conf(){
 
 }
 
-RUNDIR="/usr/bin/"
-RUNFILE="$RUNDIR/$SERVNAME"
-RUNFILEEXEC=$RUNFILE-exec
 LOGDIR="/var/log/$SERVNAME/"
-create_run(){
+start_service
+serv_run(){
+    mkdir -p $LOGDIR
 
-mkdir -p $LOGDIR
-mkdir -p $RUNDIR
-
-if [ ! -e $RUNFILE ] ; then
-cat <<EOF > "$RUNFILEEXEC"
-#!/bin/sh
-$ExecStart >> $LOGDIR/$SERVNAME.log 2>&1 &
-echo \$! > $PIDFile
-EOF
-
-cat <<EOF > "$RUNFILE"
-#!/bin/sh
-cd $WorkingDirectory
-chown $User $LOGDIR/$SERVNAME.log $PIDFile &> /dev/null
-sudo su -c "$RUNFILEEXEC" $User
-EOF
-
-#TODO move echo on next line
-chmod 755 $RUNFILE
-chmod 755 $RUNFILEEXEC
-else
-my_exit_file $RUNFILE
-fi
+    #TODO rewrite with /sbin/start-stop-daemon
+    cd $WorkingDirectory
+    /sbin/start-stop-daemon --start --chuid $User --pidfile $PIDFile --background --make-pidfile --exec $ExecStart >> $LOGDIR/$SERVNAME.log
+    cd -
 }
 
-STOPFILE="$RUNDIR/$SERVNAME"-stop
-create_stop(){
-if [ ! -e $STOPFILE ] ; then
-cat <<EOF > "$STOPFILE"
-#!/bin/sh
-/bin/kill \`cat $PIDFile\`
-EOF
-chmod 755 $STOPFILE
-else
-my_exit_file $STOPFILE
-fi
-
+serv_stop(){
+    /sbin/start-stop-daemon --stop --pidfile $PIDFile
 }
 
 MONITDIR="/etc/monit.d/"
@@ -121,9 +91,9 @@ fi
 }
 
 remove_service(){
-    rm -f "$MONITFILE" "$RUNFILE" "$RUNFILEEXEC" "$STOPFILE"
+    rm -f "$MONITFILE"
     RETVAL="$?"
-    my_exit "Files removed $MONITFILE $RUNFILE "$RUNFILEEXEC" $STOPFILE"
+    my_exit "Files removed $MONITFILE"
 }
 
 my_exit(){
@@ -142,7 +112,7 @@ help(){
 }
 
 mydone(){
-    if [ -e $MONITFILE ] && [ -e $RUNFILE ] && [ -e $RUNFILEEXEC ] && [ -e $STOPFILE ] ; then
+    if [ -e $MONITFILE ] ; then
 	RETVAL=0
         my_exit "All done, now you may run monit: monit status $SERVNAME"
     else 
@@ -190,6 +160,12 @@ fi
 	    ;;
          stop)
 	    stop_service
+            ;;
+         startd)
+	    serv_start
+	    ;;
+         stopd)
+	    serv_stop
             ;;
 	 status)
             status_service
