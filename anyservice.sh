@@ -14,6 +14,7 @@ init_serv(){
     fi
 
 }
+init_serv $1
 
 read_config(){
     while IFS='=' read varname var ; do
@@ -56,17 +57,13 @@ check_conf(){
 
 }
 
-create_run(){
 RUNDIR="/usr/bin/"
-LOGDIR="/var/log/$SERVNAME/"
 RUNFILE="$RUNDIR/$SERVNAME"
+LOGDIR="/var/log/$SERVNAME/"
+create_run(){
 
 mkdir -p $LOGDIR
 mkdir -p $RUNDIR
-
-#TODO
-#sudo su - -c "$ExecStart" $User >> $LOGDIR/$SERVNAME.log 2>1& && echo "\$!" > $PIDFile
-
 
 if [ ! -e $RUNFILE ] ; then
 cat <<EOF > "$RUNFILE"
@@ -75,14 +72,15 @@ cd $WorkingDirectory
 chown $User $LOGDIR/$SERVNAME.log $PIDFile &> /dev/null
 sudo su - -c "$ExecStart" $User >> $LOGDIR/$SERVNAME.log 2>&1 & echo "\$!" > $PIDFile
 EOF
+#TODO move echo on next line
 chmod 755 $RUNFILE
 else
 my_exit_file $RUNFILE
 fi
 }
 
-create_stop(){
 STOPFILE="$RUNDIR/$SERVNAME"-stop
+create_stop(){
 if [ ! -e $STOPFILE ] ; then
 cat <<EOF > "$STOPFILE"
 #!/bin/sh
@@ -95,9 +93,9 @@ fi
 
 }
 
-create_monit(){
 MONITDIR="/etc/monit.d/"
 MONITFILE="$MONITDIR/$SERVNAME"
+create_monit(){
 mkdir -p $MONITDIR
 
 if [ ! -e $MONITFILE ] ; then
@@ -149,6 +147,7 @@ monit_install(){
 
 start_service(){
     echo "monit start $SERVNAME"
+    monit monitor $SERVNAME
     monit start $SERVNAME
     RETVAL="$?"
     my_exit
@@ -196,12 +195,13 @@ fi
 }
 
 run(){
-	init_serv $1
+#	init_serv $1
 	my_getopts $2
 	read_config
 	check_conf
 	create_run
 	create_monit
+	create_stop
 	mydone
 #TODO need test it:
 	monit_install

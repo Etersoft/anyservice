@@ -27,10 +27,13 @@ cat /usr/bin/"$my_test_service"*
 
 cat /etc/monit.d/"$my_test_service"*
 
+sleep 10
 monit status "$my_test_service"
 
+sleep 10
 monit stop "$my_test_service"
 
+sleep 10
 monit status "$my_test_service"
 
 }
