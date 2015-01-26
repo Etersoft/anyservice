@@ -83,6 +83,20 @@ fi
 #TODO check creating pid
 }
 
+create_stop(){
+STOPFILE="$RUNDIR/$SERVNAME"-stop
+if [ ! -e $STOPFILE ] ; then
+cat <<EOF > "$STOPFILE"
+#!/bin/sh
+/bin/kill \`cat $PIDFile\`
+EOF
+chmod 755 $STOPFILE
+else
+my_exit_file $STOPFILE
+fi
+
+}
+
 create_monit(){
 MONITDIR="/etc/monit.d/"
 MONITFILE="$MONITDIR/$SERVNAME"
@@ -93,7 +107,7 @@ cat <<EOF >"$MONITFILE"
 check process $SERVNAME with pidfile $PIDFile
         group daemons
         start program = "$RUNFILE"
-        stop  program = "/bin/kill \`cat $PIDFile\`"
+        stop  program = "$STOPFILE"
         $MyRestart
 EOF
 else
