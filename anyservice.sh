@@ -156,12 +156,12 @@ done
 
 run(){
 	init_serv $1
-#	my_getopts $2
 	read_config
 	check_conf
 	create_run
 	create_monit
 	mydone
+	my_getopts $2
 #TODO need test it:
 	monit_install
 	start_service

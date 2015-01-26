@@ -16,8 +16,10 @@ echo myWorkingDirectory $WorkingDirectory
 }
 
 test_work(){
-
+SERVDIR="/etc/systemd-lite"
 my_test_service="mysleep"
+
+cp ./${my_test_service}.service $SERVDIR/
 
 ./anyservice.sh $my_test_service
 
