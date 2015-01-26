@@ -51,15 +51,14 @@ check_conf(){
 #		my_exit "Dir non exist: $WorkingDirectory "
 	fi
 
-	if [ ! -n $User ] && [ getent passwd $User ] ; then
-		my_exit "Dir non exist: $WorkingDirectory "
+	if [ -n $User ] && [ getent passwd $User ] ; then
+		my_exit "User non exist: $User "
 	fi
 
 }
 
-LOGDIR="/var/log/$SERVNAME/"
-start_service
 serv_run(){
+    LOGDIR="/var/log/$SERVNAME/"
     mkdir -p $LOGDIR
 
     #TODO rewrite with /sbin/start-stop-daemon
@@ -72,17 +71,17 @@ serv_stop(){
     /sbin/start-stop-daemon --stop --pidfile $PIDFile
 }
 
+create_monit(){
 MONITDIR="/etc/monit.d/"
 MONITFILE="$MONITDIR/$SERVNAME"
-create_monit(){
 mkdir -p $MONITDIR
 
 if [ ! -e $MONITFILE ] ; then
 cat <<EOF >"$MONITFILE"
 check process $SERVNAME with pidfile $PIDFile
         group daemons
-        start program = "$RUNFILE"
-        stop  program = "$STOPFILE"
+        start program = "$0 $SERVNAME start"
+        stop  program = "$0 $SERVNAME stop"
         $MyRestart
 EOF
 else
