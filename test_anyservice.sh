@@ -33,3 +33,4 @@ monit status "$my_test_service"
 
 }
 
+test_work

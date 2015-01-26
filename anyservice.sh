@@ -46,7 +46,8 @@ check_conf(){
 	fi
 
 	if [ ! -d $WorkingDirectory ] ; then
-		my_exit "Dir non exist: $WorkingDirectory "
+		mkdir -p $WorkingDirectory #TODO this is good turn?
+#		my_exit "Dir non exist: $WorkingDirectory "
 	fi
 
 	if [ ! -n $User ] && [ getent passwd $User ] ; then
