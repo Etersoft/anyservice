@@ -79,8 +79,6 @@ chmod 755 $RUNFILE
 else
 my_exit_file $RUNFILE
 fi
-
-#TODO check creating pid
 }
 
 create_stop(){
@@ -88,7 +86,7 @@ STOPFILE="$RUNDIR/$SERVNAME"-stop
 if [ ! -e $STOPFILE ] ; then
 cat <<EOF > "$STOPFILE"
 #!/bin/sh
-/bin/kill \`cat $PIDFile\`
+/bin/kill `cat $PIDFile`
 EOF
 chmod 755 $STOPFILE
 else
@@ -115,6 +113,12 @@ my_exit_file $MONITFILE
 fi
 }
 
+remove_service(){
+    rm -f "$MONITFILE" "$RUNFILE" "$STOPFILE"
+    RETVAL="$?"
+    my_exit "Files removed $MONITFILE $RUNFILE $STOPFILE"
+}
+
 my_exit(){
     echo "$1"
     exit $RETVAL
@@ -125,15 +129,15 @@ my_exit_file(){
 }
 
 help(){
-    echo "anyservice.sh <service file name>"
+    echo "anyservice.sh <service file name> [start|stop|status]"
     echo "example: put service file to $SERVDIR and run # anyservice.sh odoo"
     my_exit
 }
 
 mydone(){
-    if [ -e $MONITFILE ] && [ -e $RUNFILE ] ; then
+    if [ -e $MONITFILE ] && [ -e $RUNFILE ] && [ -e $STOPFILE ] ; then
 	RETVAL=0
-        my_exit "All done, now you may run monit: monit start $SERVNAME"
+        my_exit "All done, now you may run monit: monit status $SERVNAME"
     else 
 	exit $RETVAL
     fi
@@ -144,39 +148,56 @@ monit_install(){
 }
 
 start_service(){
+    echo "monit start $SERVNAME"
     monit start $SERVNAME
+    RETVAL="$?"
+    my_exit
 }
 
 stop_service(){
+    echo "monit stop $SERVNAME"
     monit stop $SERVNAME
+    RETVAL="$?"
+    my_exit
+}
+
+status_service(){
+    echo "monit status $SERVNAME"
+#TODO close monit bug: show status of all monitored service
+    monit status $SERVNAME
+    RETVAL="$?"
+    my_exit
 }
 
 my_getopts(){
-if ! [ -n $1 ] ; then 
-    my_exit
+if ! [ -n "$1" ] ; then 
+    return 1
+    #my_exit
 fi
 
-#TODO not work. getopts work only with one letter options. example: -x
-
-while getopts “start:stop:” OPTION
-do
-     case $OPTION in
+#TODO test
+     case $1 in
          start)
 	    start_service
 	    ;;
          stop)
 	    stop_service
             ;;
-         ?)
-             help
-             ;;
+	 status)
+            status_service
+            ;;
+	 remove)
+            remove_service
+            ;;
+         *)
+            help
+            ;;
      esac
-done
 }
 
 run(){
 	init_serv $1
-#	my_getopts $2
+	my_getopts $2
 	read_config
 	check_conf
 	create_run
