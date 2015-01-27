@@ -147,19 +147,19 @@ stop_service(){
 
 status_service(){
     echo "$MYMONIT status $NEWSERVNAME"
-#TODO close monit bug: show status of all monitored service
+    #TODO close monit bug: show status of all monitored service
     $MYMONIT status $NEWSERVNAME
     RETVAL="$?"
     my_exit
 }
 
 my_getopts(){
-if ! [ -n "$1" ] ; then 
-    return 1
-    #my_exit
-fi
+    if ! [ -n "$1" ] ; then 
+	return 1
+        #my_exit
+    fi
 
-     case $1 in
+    case $1 in
          start)
 	    start_service
 	    ;;
@@ -181,7 +181,7 @@ fi
          *)
             help
             ;;
-     esac
+    esac
 }
 
 remove_service(){
