@@ -2,6 +2,7 @@
 
 RETVAL=1
 MYMONIT="monit"
+VERBOSE=false
 
 init_serv(){
     SERVDIR="/etc/systemd-lite"
@@ -37,7 +38,7 @@ read_config(){
 	    ExecStart) ExecStart="$var" ;;
 	    Restart) Restart="$var" ;;
 	    PIDFile) PIDFile="$var" ;;
-	    *)     false && echo "Unsuported systemd option $varname $var" ;;
+	    *)     $VERBOSE && echo "Unsuported systemd option $varname $var" ;;
 	esac
     done < $SERVFILE
     #TODO grep -v ^# | grep =
@@ -133,11 +134,12 @@ serv_stopd(){
 start_service(){
     #TODO make monit file if start run before init
     #create_monit
-
+    
+    #TODO add $VERBOSE &&
     echo "$MYMONIT start $NEWSERVNAME"
     $MYMONIT monitor $NEWSERVNAME
     #TODO is need start after monitor?
-    $MYMONIT start $NEWSERVNAME
+    #$MYMONIT start $NEWSERVNAME
     RETVAL="$?"
     my_exit
 }
@@ -191,11 +193,11 @@ my_getopts(){
 remove_service(){
     rm -f "$MONITFILE"
     RETVAL="$?"
-    my_exit "Files removed $MONITFILE"
+    $VERBOSE && my_exit "Files removed $MONITFILE"
 }
 
 my_exit(){
-    echo "$1"
+    $VERBOSE && echo "$1"
     return $RETVAL
 }
 
@@ -212,7 +214,7 @@ help(){
 mydone(){
     if [ -e $MONITFILE ] ; then
 	RETVAL=0
-        #my_exit "All done, now you may run monit: monit status $NEWSERVNAME"
+        #my_exit "All done, now you can monitor status: monit status $NEWSERVNAME"
     else 
 	exit $RETVAL
     fi
@@ -227,8 +229,8 @@ run(){
     my_getopts $2
 
     #TODO need test it:
-    monit_install
-    start_service
+    #monit_install
+    #start_service
     mydone
 }
 
