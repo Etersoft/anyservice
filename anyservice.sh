@@ -40,8 +40,8 @@ read_config(){
 	    *)     false && echo "Unsuported systemd option $varname $var" ;;
 	esac
     done < $SERVFILE
-#No need this, because no match in case
-#TODO grep -v ^# | grep =
+    #TODO grep -v ^# | grep =
+    #No need this, because no match in case for unsuported var
 }
 
 check_conf(){
@@ -126,9 +126,12 @@ serv_stop(){
 }
 
 start_service(){
+    #TODO make monit file if start run before init
+    #create_monit
+
     echo "$MYMONIT start $NEWSERVNAME"
     $MYMONIT monitor $NEWSERVNAME
-#TODO is need start after monitor?
+    #TODO is need start after monitor?
     $MYMONIT start $NEWSERVNAME
     RETVAL="$?"
     my_exit
@@ -212,14 +215,16 @@ mydone(){
 
 
 run(){
-#	init_serv $1
-	my_getopts $2
-	read_config
-	check_conf
-#TODO need test it:
-	monit_install
-	start_service
-	mydone
+    #	init_serv $1
+    my_getopts $2
+    read_config
+    check_conf
+    create_monit
+
+    #TODO need test it:
+    monit_install
+    start_service
+    mydone
 }
 
 run $1 $2
