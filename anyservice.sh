@@ -26,7 +26,7 @@ file_non_exist(){
     return `! [ -e "$1" ]`
 }
 
-#TODO rewrite to run function
+#TODO rewrite to run function #HACK for my_get_ops
 init_serv $1
 
 read_config(){
@@ -42,27 +42,26 @@ read_config(){
     done < $SERVFILE
 #No need this, because no match in case
 #TODO grep -v ^# | grep =
-
 }
 
 check_conf(){
 
-	if [ -n $PIDFile ] ; then
-	        PIDFile=/var/run/"${SERVNAME}.pid"
-	fi
+    if [ -n $PIDFile ] ; then
+        PIDFile=/var/run/"${SERVNAME}.pid"
+    fi
 
-	#TODO it needed or restart monit always?
-	#if exist restart var enable monit restart 
-	if [ -n $Restart ] ; then
-		    MyRestart="if 5 restarts with 5 cycles then timeout"
-		else
-  		MyRestart=""
-	fi
+    #TODO it needed or restart monit always?
+    #if exist restart var enable monit restart 
+    if [ -n $Restart ] ; then
+        MyRestart="if 5 restarts with 5 cycles then timeout"
+    else
+  	MyRestart=""
+    fi
 
-	if [ ! -d $WorkingDirectory ] ; then
-		mkdir -p $WorkingDirectory #TODO this is good turn?
-#		my_exit "Dir non exist: $WorkingDirectory "
-	fi
+    if [ ! -d $WorkingDirectory ] ; then
+	mkdir -p $WorkingDirectory #TODO this is good turn?
+	#my_exit "Dir non exist: $WorkingDirectory "
+    fi
 
 #TODO check whis
 #	if [ -n $User ] && [ getent passwd $User ] ; then
@@ -77,6 +76,7 @@ MONITFILE="$MONITDIR/$NEWSERVNAME"
 mkdir -p $MONITDIR
 
 #TODO write $MONITFILE if non exist or older that $SERVFILE
+#DONE need check
 
 if [ compare_file "$SERVFILE" "$MONITFILE" ] ; then
 cat <<EOF >"$MONITFILE"
@@ -103,40 +103,13 @@ compare_file(){ #return 0 if file non exist or $2 older that $1
     fi
 }
 
-remove_service(){
-    rm -f "$MONITFILE"
-    RETVAL="$?"
-    my_exit "Files removed $MONITFILE"
-}
-
-my_exit(){
-    echo "$1"
-    exit $RETVAL
-}
-
-my_exit_file(){
-    my_exit "File already exist $1"
-}
-
-help(){
-    echo "anyservice.sh <service file name> [start|stop|status]"
-    echo "example: put service file to $SERVDIR and run # anyservice.sh odoo"
-    my_exit
-}
-
-mydone(){
-    if [ -e $MONITFILE ] ; then
-	RETVAL=0
-        my_exit "All done, now you may run monit: monit status $NEWSERVNAME"
-    else 
-	exit $RETVAL
-    fi
-}
 
 monit_install(){
     #TODO change $MYMONIT to $MONITPACKAGE
     epmq $MYMONIT || epmi -y $MYMONIT
 }
+
+#=============== stop and start section ==========================
 
 serv_run(){
     LOGDIR="/var/log/$NEWSERVNAME/"
@@ -182,7 +155,6 @@ if ! [ -n "$1" ] ; then
     #my_exit
 fi
 
-#TODO test
      case $1 in
          start)
 	    start_service
@@ -207,6 +179,37 @@ fi
             ;;
      esac
 }
+
+remove_service(){
+    rm -f "$MONITFILE"
+    RETVAL="$?"
+    my_exit "Files removed $MONITFILE"
+}
+
+my_exit(){
+    echo "$1"
+    exit $RETVAL
+}
+
+my_exit_file(){
+    my_exit "File already exist $1"
+}
+
+help(){
+    echo "anyservice.sh <service file name> [start|stop|status]"
+    echo "example: put service file to $SERVDIR and run # anyservice.sh odoo"
+    my_exit
+}
+
+mydone(){
+    if [ -e $MONITFILE ] ; then
+	RETVAL=0
+        my_exit "All done, now you may run monit: monit status $NEWSERVNAME"
+    else 
+	exit $RETVAL
+    fi
+}
+
 
 run(){
 #	init_serv $1
