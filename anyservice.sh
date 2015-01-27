@@ -27,7 +27,7 @@ file_non_exist(){
 }
 
 #TODO rewrite to run function #HACK for my_get_ops
-init_serv $1
+#init_serv $1
 
 read_config(){
     while IFS='=' read varname var ; do
@@ -110,7 +110,7 @@ monit_install(){
 }
 
 #=============== stop and start section ==========================
-# *d command really start serv, without d start over monit, and too run *d
+# *d command really start serv, without d run d command over monit
 
 serv_startd(){
     LOGDIR="/var/log/$NEWSERVNAME/"
@@ -192,7 +192,7 @@ remove_service(){
 
 my_exit(){
     echo "$1"
-    exit $RETVAL
+    return $RETVAL
 }
 
 my_exit_file(){
@@ -216,11 +216,11 @@ mydone(){
 
 
 run(){
-    #	init_serv $1
-    my_getopts $2
+    init_serv $1
     read_config
     check_conf
     create_monit
+    my_getopts $2
 
     #TODO need test it:
     monit_install
