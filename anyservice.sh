@@ -78,7 +78,7 @@ mkdir -p $MONITDIR
 #TODO write $MONITFILE if non exist or older that $SERVFILE
 #DONE need check
 
-if [ compare_file "$SERVFILE" "$MONITFILE" ] ; then
+if need_update_file "$SERVFILE" "$MONITFILE" ; then
 cat <<EOF >"$MONITFILE"
 check process $NEWSERVNAME with pidfile $PIDFile
         group daemons
@@ -86,17 +86,21 @@ check process $NEWSERVNAME with pidfile $PIDFile
         stop  program = "$0 $NEWSERVNAME stop"
         $MyRestart
 EOF
+
+#TODO check Need monit restart for read new file
+#serv monit restart
+#sleep 5 #monit start some time
 else
 my_exit_file $MONITFILE
 fi
 }
 
-compare_file(){ #return 0 if file non exist or $2 older that $1
+need_update_file(){ #return 0 if file non exist or $2 older that $1
     #servfile_non_exist
-    #example: compare_file serv monit #if monit older that serv return 0
+    #example: need_update_file serv monit #if monit older that serv return 0
     if [ ! -e $2 ] ; then
 	return 0
-    else if [ $1 -ot $2 ] ; then
+    elif ! [ $1 -ot $2 ] ; then
 	return 0
     else
 	return 1

@@ -23,7 +23,7 @@ cp ./${my_test_service}.service $SERVDIR/
 
 ./anyservice.sh $my_test_service
 
-cat /usr/bin/"$my_test_service"*
+#cat /usr/bin/"$my_test_service"*
 
 cat /etc/monit.d/"$my_test_service"*
 
