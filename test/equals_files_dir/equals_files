@@ -1,0 +1,12 @@
+#!/bin/bash
+
+compare(){
+    [ $1 -ot $2 ] && echo "$1 older $2" || echo "$1 not older $2"
+}
+
+foo(){
+    return `! [ -e "$1" ]`
+}
+
+#compare $1 $2
+foo $1 && echo "file non exist"

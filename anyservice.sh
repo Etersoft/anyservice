@@ -8,13 +8,25 @@ init_serv(){
     mkdir -p $SERVDIR
 
     SERVNAME="$1"
-    SERVFILE="${SERVNAME}.service"
+    SERVFILE="$SERVDIR/${SERVNAME}.service"
+    NEWSERVNAME="anyservice-${SERVNAME}"
 
-    if ! [ -n "$SERVNAME" ] && ! [ -e "$SERVFILE" ] ; then
+    if ! [ -n "$SERVNAME" ] ; then
         help
     fi
 
+    servfile_non_exist && my_exit "File $SERVNAME non exist, please create."
 }
+
+servfile_non_exist(){
+    file_non_exist $SERVFILE
+}
+
+file_non_exist(){
+    return `! [ -e "$1" ]`
+}
+
+#TODO rewrite to run function
 init_serv $1
 
 read_config(){
@@ -27,7 +39,7 @@ read_config(){
 	    PIDFile) PIDFile="$var" ;;
 	    *)     false && echo "Unsuported systemd option $varname $var" ;;
 	esac
-    done < $SERVDIR/$SERVFILE
+    done < $SERVFILE
 #No need this, because no match in case
 #TODO grep -v ^# | grep =
 
@@ -61,20 +73,34 @@ check_conf(){
 
 create_monit(){
 MONITDIR="/etc/monit.d/"
-MONITFILE="$MONITDIR/$SERVNAME"
+MONITFILE="$MONITDIR/$NEWSERVNAME"
 mkdir -p $MONITDIR
 
-if [ ! -e $MONITFILE ] ; then
+#TODO write $MONITFILE if non exist or older that $SERVFILE
+
+if [ compare_file "$SERVFILE" "$MONITFILE" ] ; then
 cat <<EOF >"$MONITFILE"
-check process $SERVNAME with pidfile $PIDFile
+check process $NEWSERVNAME with pidfile $PIDFile
         group daemons
-        start program = "$0 $SERVNAME start"
-        stop  program = "$0 $SERVNAME stop"
+        start program = "$0 $NEWSERVNAME start"
+        stop  program = "$0 $NEWSERVNAME stop"
         $MyRestart
 EOF
 else
 my_exit_file $MONITFILE
 fi
+}
+
+compare_file(){ #return 0 if file non exist or $2 older that $1
+    #servfile_non_exist
+    #example: compare_file serv monit #if monit older that serv return 0
+    if [ ! -e $2 ] ; then
+	return 0
+    else if [ $1 -ot $2 ] ; then
+	return 0
+    else
+	return 1
+    fi
 }
 
 remove_service(){
@@ -101,7 +127,7 @@ help(){
 mydone(){
     if [ -e $MONITFILE ] ; then
 	RETVAL=0
-        my_exit "All done, now you may run monit: monit status $SERVNAME"
+        my_exit "All done, now you may run monit: monit status $NEWSERVNAME"
     else 
 	exit $RETVAL
     fi
@@ -113,12 +139,12 @@ monit_install(){
 }
 
 serv_run(){
-    LOGDIR="/var/log/$SERVNAME/"
+    LOGDIR="/var/log/$NEWSERVNAME/"
     mkdir -p $LOGDIR
 
     #TODO rewrite with /sbin/start-stop-daemon
     cd $WorkingDirectory
-    /sbin/start-stop-daemon --start --chuid $User --pidfile $PIDFile --background --make-pidfile --exec $ExecStart >> $LOGDIR/$SERVNAME.log
+    /sbin/start-stop-daemon --start --chuid $User --pidfile $PIDFile --background --make-pidfile --exec $ExecStart >> $LOGDIR/$NEWSERVNAME.log
     cd -
 }
 
@@ -127,25 +153,25 @@ serv_stop(){
 }
 
 start_service(){
-    echo "$MYMONIT start $SERVNAME"
-    $MYMONIT monitor $SERVNAME
+    echo "$MYMONIT start $NEWSERVNAME"
+    $MYMONIT monitor $NEWSERVNAME
 #TODO is need start after monitor?
-    $MYMONIT start $SERVNAME
+    $MYMONIT start $NEWSERVNAME
     RETVAL="$?"
     my_exit
 }
 
 stop_service(){
-    echo "$MYMONIT stop $SERVNAME"
-    $MYMONIT stop $SERVNAME
+    echo "$MYMONIT stop $NEWSERVNAME"
+    $MYMONIT stop $NEWSERVNAME
     RETVAL="$?"
     my_exit
 }
 
 status_service(){
-    echo "$MYMONIT status $SERVNAME"
+    echo "$MYMONIT status $NEWSERVNAME"
 #TODO close monit bug: show status of all monitored service
-    $MYMONIT status $SERVNAME
+    $MYMONIT status $NEWSERVNAME
     RETVAL="$?"
     my_exit
 }
