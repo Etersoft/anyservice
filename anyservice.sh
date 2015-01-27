@@ -110,8 +110,9 @@ monit_install(){
 }
 
 #=============== stop and start section ==========================
+# *d command really start serv, without d start over monit, and too run *d
 
-serv_run(){
+serv_startd(){
     LOGDIR="/var/log/$NEWSERVNAME/"
     mkdir -p $LOGDIR
 
@@ -121,7 +122,7 @@ serv_run(){
     cd -
 }
 
-serv_stop(){
+serv_stopd(){
     /sbin/start-stop-daemon --stop --pidfile $PIDFile
 }
 
@@ -165,14 +166,14 @@ fi
          stop)
 	    stop_service
             ;;
-         startd)
-	    serv_start
-	    ;;
-         stopd)
-	    serv_stop
-            ;;
 	 status)
             status_service
+            ;;
+         startd)
+	    serv_startd
+	    ;;
+         stopd)
+	    serv_stopd
             ;;
 	 remove)
             remove_service
@@ -207,7 +208,7 @@ help(){
 mydone(){
     if [ -e $MONITFILE ] ; then
 	RETVAL=0
-        my_exit "All done, now you may run monit: monit status $NEWSERVNAME"
+        #my_exit "All done, now you may run monit: monit status $NEWSERVNAME"
     else 
 	exit $RETVAL
     fi
