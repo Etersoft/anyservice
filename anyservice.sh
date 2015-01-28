@@ -68,9 +68,6 @@ MONITDIR="/etc/monit.d/"
 MONITFILE="$MONITDIR/$NEWSERVNAME"
 mkdir -p $MONITDIR
 
-#TODO write $MONITFILE if non exist or older that $SERVFILE
-#DONE need check
-
 if need_update_file "$SERVFILE" "$MONITFILE" ; then
 cat <<EOF >"$MONITFILE"
 check process $NEWSERVNAME with pidfile $PIDFile
