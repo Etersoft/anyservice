@@ -45,7 +45,7 @@ check_conf(){
 
     #TODO it needed or restart monit always?
     #if exist restart var enable monit restart 
-    if [ -n $Restart ] ; then
+    if [ -n "$Restart" ] ; then
         MyRestart="if 5 restarts with 5 cycles then timeout"
     else
   	MyRestart=""
@@ -57,7 +57,7 @@ check_conf(){
     fi
 
 #TODO check whis
-#	if [ -n $User ] && [ getent passwd $User ] ; then
+#	if [ -n "$User" ] && [ getent passwd "$User" ] ; then
 #		my_return "User non exist: $User "
 #	fi
 
@@ -92,9 +92,9 @@ fi
 need_update_file(){ #return 0 if file non exist or $2 older that $1
     #servfile_non_exist
     #example: need_update_file serv monit #if monit older that serv return 0
-    if [ ! -e $2 ] ; then
+    if [ ! -e "$2" ] ; then
 	return 0
-    elif [ $1 -nt $2 ] ; then
+    elif [ "$1" -nt "$2" ] ; then
 	return 0
     else
 	return 1
