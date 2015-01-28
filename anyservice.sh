@@ -1,34 +1,26 @@
 #!/bin/bash
 
 RETVAL=1
+MYNAMEIS="$0"
 MYMONIT="monit"
 VERBOSE=false
+SERVDIR="/etc/systemd-lite"
+RUNDIR="/var/run/"
+DEFAULTLOGDIR="/var/log/"
 
 init_serv(){
-    SERVDIR="/etc/systemd-lite"
     mkdir -p $SERVDIR
 
     SERVNAME="$1"
     SERVFILE="$SERVDIR/${SERVNAME}.service"
     NEWSERVNAME="anyservice-${SERVNAME}"
 
-    if ! [ -n "$SERVNAME" ] ; then
-        help
+    if ! [ -n "$SERVNAME" ] && ! [ -e "$SERVFILE" ] ; then
+        RETVAL=1
+	my_return
     fi
 
-    servfile_non_exist && my_exit "File $SERVNAME non exist, please create."
 }
-
-servfile_non_exist(){
-    file_non_exist $SERVFILE
-}
-
-file_non_exist(){
-    return `! [ -e "$1" ]`
-}
-
-#TODO rewrite to run function #HACK for my_get_ops
-#init_serv $1
 
 read_config(){
     while IFS='=' read varname var ; do
@@ -47,8 +39,8 @@ read_config(){
 
 check_conf(){
 
-    if [ -n $PIDFile ] ; then
-        PIDFile=/var/run/"${SERVNAME}.pid"
+    if [ -z "$PIDFile" ] ; then
+        PIDFile=$RUNDIR"${SERVNAME}.pid"
     fi
 
     #TODO it needed or restart monit always?
@@ -60,13 +52,13 @@ check_conf(){
     fi
 
     if [ ! -d $WorkingDirectory ] ; then
-	mkdir -p $WorkingDirectory #TODO this is good turn?
-	#my_exit "Dir non exist: $WorkingDirectory "
+        RETVAL=1
+        my_return
     fi
 
 #TODO check whis
 #	if [ -n $User ] && [ getent passwd $User ] ; then
-#		my_exit "User non exist: $User "
+#		my_return "User non exist: $User "
 #	fi
 
 }
@@ -83,8 +75,8 @@ if need_update_file "$SERVFILE" "$MONITFILE" ; then
 cat <<EOF >"$MONITFILE"
 check process $NEWSERVNAME with pidfile $PIDFile
         group daemons
-        start program = "$0 $NEWSERVNAME start"
-        stop  program = "$0 $NEWSERVNAME stop"
+        start program = "$MYNAMEIS $NEWSERVNAME start"
+        stop  program = "$MYNAMEIS $NEWSERVNAME stop"
         $MyRestart
 EOF
 
@@ -92,7 +84,8 @@ EOF
 #serv monit restart
 #sleep 5 #monit start some time
 else
-my_exit_file $MONITFILE
+RETVAL=1
+my_return
 fi
 }
 
@@ -101,7 +94,7 @@ need_update_file(){ #return 0 if file non exist or $2 older that $1
     #example: need_update_file serv monit #if monit older that serv return 0
     if [ ! -e $2 ] ; then
 	return 0
-    elif ! [ $1 -ot $2 ] ; then
+    elif [ $1 -nt $2 ] ; then
 	return 0
     else
 	return 1
@@ -118,10 +111,9 @@ monit_install(){
 # *d command really start serv, without d run d command over monit
 
 serv_startd(){
-    LOGDIR="/var/log/$NEWSERVNAME/"
+    LOGDIR="$DEFAULTLOGDIR/$NEWSERVNAME/"
     mkdir -p $LOGDIR
-
-    #TODO rewrite with /sbin/start-stop-daemon
+    #TODO chech it
     cd $WorkingDirectory
     /sbin/start-stop-daemon --start --chuid $User --pidfile $PIDFile --background --make-pidfile --exec $ExecStart >> $LOGDIR/$NEWSERVNAME.log
     cd -
@@ -132,23 +124,19 @@ serv_stopd(){
 }
 
 start_service(){
-    #TODO make monit file if start run before init
-    #create_monit
-    
-    #TODO add $VERBOSE &&
     echo "$MYMONIT start $NEWSERVNAME"
     $MYMONIT monitor $NEWSERVNAME
     #TODO is need start after monitor?
     #$MYMONIT start $NEWSERVNAME
     RETVAL="$?"
-    my_exit
+    my_return
 }
 
 stop_service(){
     echo "$MYMONIT stop $NEWSERVNAME"
     $MYMONIT stop $NEWSERVNAME
     RETVAL="$?"
-    my_exit
+    my_return
 }
 
 status_service(){
@@ -156,13 +144,13 @@ status_service(){
     #TODO close monit bug: show status of all monitored service
     $MYMONIT status $NEWSERVNAME
     RETVAL="$?"
-    my_exit
+    my_return
 }
 
 my_getopts(){
     if ! [ -n "$1" ] ; then 
 	return 1
-        #my_exit
+        #my_return
     fi
 
     case $1 in
@@ -193,45 +181,41 @@ my_getopts(){
 remove_service(){
     rm -f "$MONITFILE"
     RETVAL="$?"
-    $VERBOSE && my_exit "Files removed $MONITFILE"
+    my_return "Files removed $MONITFILE"
 }
 
-my_exit(){
+my_return(){
     $VERBOSE && echo "$1"
     return $RETVAL
 }
 
+my_exit(){
+    $VERBOSE && echo "$1"
+    exit $RETVAL
+}
+
+my_return_file(){
+    RETVAL=1 
+    my_return "File already exist $1"
+}
+
 my_exit_file(){
+    RETVAL=1 
     my_exit "File already exist $1"
 }
 
 help(){
     echo "anyservice.sh <service file name> [start|stop|status]"
     echo "example: put service file to $SERVDIR and run # anyservice.sh odoo"
-    my_exit
+    my_return
 }
-
-mydone(){
-    if [ -e $MONITFILE ] ; then
-	RETVAL=0
-        #my_exit "All done, now you can monitor status: monit status $NEWSERVNAME"
-    else 
-	exit $RETVAL
-    fi
-}
-
 
 run(){
-    init_serv $1
+    init_serv $1 || help
     read_config
-    check_conf
-    create_monit
+    check_conf || my_exit "Dir non exist: $WorkingDirectory "
+    create_monit || my_exit_file $MONITFILE
     my_getopts $2
-
-    #TODO need test it:
-    #monit_install
-    #start_service
-    mydone
 }
 
 run $1 $2
