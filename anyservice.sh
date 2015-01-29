@@ -7,13 +7,14 @@ VERBOSE=false
 SERVDIR="/etc/systemd-lite"
 RUNDIR="/var/run/"
 DEFAULTLOGDIR="/var/log/"
+AUTOSTRING="# File created automatic by $MYNAMEIS"
 
 init_serv(){
     mkdir -p $SERVDIR
 
     SERVNAME="$1"
     SERVFILE="$SERVDIR/${SERVNAME}.service"
-    NEWSERVNAME="anyservice-${SERVNAME}"
+    NEWSERVNAME="${SERVNAME}"
 
     if ! [ -n "$SERVNAME" ] && ! [ -e "$SERVFILE" ] ; then
         RETVAL=1
@@ -75,6 +76,8 @@ check process $NEWSERVNAME with pidfile $PIDFile
         start program = "$MYNAMEIS $NEWSERVNAME start"
         stop  program = "$MYNAMEIS $NEWSERVNAME stop"
         $MyRestart
+
+$AUTOSTRING
 EOF
 
 #TODO check Need monit restart for read new file
@@ -93,11 +96,16 @@ need_update_file(){ #return 0 if file non exist or $2 older that $1
 	return 0
     elif [ "$1" -nt "$2" ] ; then
 	return 0
+    elif is_auto_created $2 ; then
+	return 0
     else
 	return 1
     fi
 }
 
+is_auto_created(){
+    [ "`tail -n 1 $1`" = "$AUTOSTRING" ] 
+}
 
 monit_install(){
     #TODO change $MYMONIT to $MONITPACKAGE
