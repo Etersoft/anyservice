@@ -94,9 +94,7 @@ need_update_file(){ #return 0 if file non exist or $2 older that $1
     #example: need_update_file serv monit #if monit older that serv return 0
     if [ ! -e "$2" ] ; then
 	return 0
-    elif [ "$1" -nt "$2" ] ; then
-	return 0
-    elif is_auto_created $2 ; then
+    elif [ "$1" -nt "$2" ] && is_auto_created $2 ; then
 	return 0
     else
 	return 1
