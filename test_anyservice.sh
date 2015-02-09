@@ -18,6 +18,7 @@ echo myWorkingDirectory $WorkingDirectory
 test_work(){
 SERVDIR="/etc/systemd-lite"
 my_test_service="mysleep"
+MYTIMETOSLEEP=15
 
 cp ./${my_test_service}.service $SERVDIR/
 
@@ -27,13 +28,13 @@ cp ./${my_test_service}.service $SERVDIR/
 
 cat /etc/monit.d/"$my_test_service"*
 
-sleep 10
+sleep $MYTIMETOSLEEP
 monit status "$my_test_service"
 
-sleep 10
+sleep $MYTIMETOSLEEP
 monit stop "$my_test_service"
 
-sleep 10
+sleep $MYTIMETOSLEEP
 monit status "$my_test_service"
 
 }
