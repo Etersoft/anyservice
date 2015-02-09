@@ -220,7 +220,7 @@ run(){
     init_serv $1 || help
     read_config
     check_conf || my_exit "Dir non exist: $WorkingDirectory "
-    create_monit || my_exit_file $MONITFILE
+    create_monit || my_return_file $MONITFILE
     my_getopts $2
 }
 
