@@ -145,6 +145,13 @@ stop_service(){
     my_return
 }
 
+restart_service(){
+    echo "$MYMONIT restart $NEWSERVNAME"
+    $MYMONIT restart $NEWSERVNAME
+    RETVAL="$?"
+    my_return
+}
+
 status_service(){
     echo "$MYMONIT status $NEWSERVNAME"
     #TODO close monit bug: show status of all monitored service
@@ -165,6 +172,9 @@ my_getopts(){
 	    ;;
          stop)
 	    stop_service
+            ;;
+         restart)
+	    restart_service
             ;;
 	 status)
             status_service
@@ -211,7 +221,7 @@ my_exit_file(){
 }
 
 help(){
-    echo "anyservice.sh <service file name> [start|stop|status]"
+    echo "anyservice.sh <service file name> [start|stop|restart|status]"
     echo "example: put service file to $SERVDIR and run # anyservice.sh odoo"
     my_return
 }
