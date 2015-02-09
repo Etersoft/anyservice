@@ -1,5 +1,6 @@
 #!/bin/bash
 
+MYSCRIPTDIR="$(dirname "$0")"
 RETVAL=1
 MYNAMEIS="$0"
 MYMONIT="monit"
@@ -7,7 +8,7 @@ VERBOSE=false
 SERVDIR="/etc/systemd-lite"
 RUNDIR="/var/run/"
 DEFAULTLOGDIR="/var/log/"
-AUTOSTRING="# File created automatic by $MYNAMEIS"
+AUTOSTRING="# File created automatic by $MYSCRIPTDIR/$MYNAMEIS"
 
 init_serv(){
     mkdir -p $SERVDIR
@@ -73,16 +74,16 @@ if need_update_file "$SERVFILE" "$MONITFILE" ; then
 cat <<EOF >"$MONITFILE"
 check process $NEWSERVNAME with pidfile $PIDFile
         group daemons
-        start program = "$MYNAMEIS $NEWSERVNAME start"
-        stop  program = "$MYNAMEIS $NEWSERVNAME stop"
+        start program = "$MYSCRIPTDIR/$MYNAMEIS $NEWSERVNAME start"
+        stop  program = "$MYSCRIPTDIR/$MYNAMEIS $NEWSERVNAME stop"
         $MyRestart
 
 $AUTOSTRING
 EOF
 
-#TODO check Need monit restart for read new file
-#serv monit restart
-#sleep 5 #monit start some time
+#TODO check Need monit restart for read new file #bug
+serv monit restart
+sleep 5 #monit start some time
 else
 RETVAL=1
 my_return
@@ -108,6 +109,7 @@ is_auto_created(){
 monit_install(){
     #TODO change $MYMONIT to $MONITPACKAGE
     epmq $MYMONIT || epmi -y $MYMONIT
+    serv monit start #TODO check it and add depends on epm
 }
 
 #=============== stop and start section ==========================
