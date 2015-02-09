@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MYSCRIPTDIR="$(dirname "$0")"
+MYSCRIPTDIR="$(pwd)"
 RETVAL=1
 MYNAMEIS="$0"
 MYMONIT="monit"
