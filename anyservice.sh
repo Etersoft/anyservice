@@ -83,7 +83,8 @@ EOF
 
 #TODO check Need monit restart for read new file #bug
 serv monit restart
-sleep 5 #monit start some time
+my_return "White while monit is restarting"
+sleep 10 #monit start 10 seconds how wait this time?
 else
 RETVAL=1
 my_return
