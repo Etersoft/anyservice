@@ -8,7 +8,7 @@ VERBOSE=false
 SERVDIR="/etc/systemd-lite"
 RUNDIR="/var/run/"
 DEFAULTLOGDIR="/var/log/"
-AUTOSTRING="# File created automatic by $MYSCRIPTDIR/$MYNAMEIS"
+AUTOSTRING="# File created automatic by $MYNAMEIS"
 
 init_serv(){
     mkdir -p $SERVDIR
