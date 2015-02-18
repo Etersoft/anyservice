@@ -74,8 +74,8 @@ if need_update_file "$SERVFILE" "$MONITFILE" ; then
 cat <<EOF >"$MONITFILE"
 check process $NEWSERVNAME with pidfile $PIDFile
         group daemons
-        start program = "$MYSCRIPTDIR/$MYNAMEIS $NEWSERVNAME start"
-        stop  program = "$MYSCRIPTDIR/$MYNAMEIS $NEWSERVNAME stop"
+        start program = "$MYNAMEIS $NEWSERVNAME start"
+        stop  program = "$MYNAMEIS $NEWSERVNAME stop"
         $MyRestart
 
 $AUTOSTRING
