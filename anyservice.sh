@@ -3,11 +3,12 @@
 MYSCRIPTDIR="$(pwd)"
 RETVAL=1
 MYNAMEIS="$0"
+SCRIPTNAME="$(basename $0)"
 MYMONIT="monit"
 VERBOSE=false
 SERVDIR="/etc/systemd-lite"
-RUNDIR="/var/run/"
-DEFAULTLOGDIR="/var/log/"
+RUNDIR="/var/run/$SCRIPTNAME"
+DEFAULTLOGDIR="/var/log/$SCRIPTNAME"
 AUTOSTRING="# File created automatic by $MYNAMEIS"
 
 init_serv(){
