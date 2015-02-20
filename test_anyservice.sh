@@ -35,8 +35,9 @@ sleep $MYTIMETOSLEEP
 monit stop "$my_test_service"
 
 sleep $MYTIMETOSLEEP
-monit status "$my_test_service"
+monit status "$my_test_service" | grep $MYTIMETOSLEEP && echo OK
 
 }
 
 test_work
+
