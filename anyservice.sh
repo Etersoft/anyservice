@@ -7,8 +7,8 @@ SCRIPTNAME="$(basename $0)"
 MYMONIT="monit"
 VERBOSE=false
 SERVDIR="/etc/systemd-lite"
-RUNDIR="/var/run/$SCRIPTNAME"
-DEFAULTLOGDIR="/var/log/$SCRIPTNAME"
+RUNDIR="/var/run/$SCRIPTNAME/"
+DEFAULTLOGDIR="/var/log/$SCRIPTNAME/"
 AUTOSTRING="# File created automatic by $MYNAMEIS"
 
 init_serv(){
