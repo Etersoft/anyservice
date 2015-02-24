@@ -1,0 +1,9 @@
+#!/bin/sh
+
+./pid_with_exec & echo "1 $!" &
+
+exec ./pid_with_exec & echo "2 $!" &
+
+./pid_without_exec & echo "3 $!" &
+
+exec ./pid_without_exec & echo "4 $!" &
