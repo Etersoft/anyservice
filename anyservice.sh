@@ -13,6 +13,8 @@ AUTOSTRING="# File created automatic by $MYNAMEIS"
 
 init_serv(){
     mkdir -p $SERVDIR
+    mkdir -p $DEFAULTLOGDIR
+    mkdir -p $RUNDIR
 
     SERVNAME="$1"
     SERVFILE="$SERVDIR/${SERVNAME}.service"
@@ -120,11 +122,8 @@ monit_install(){
 serv_startd(){
     LOGDIR="$DEFAULTLOGDIR/$NEWSERVNAME/"
     mkdir -p $LOGDIR
-    #TODO chech it
-    cd $WorkingDirectory
-    HomeExecStart="HOME=$(eval echo ~$User) ${ExecStart}"
-    /sbin/start-stop-daemon --start --chuid $User --pidfile $PIDFile --background --make-pidfile --exec $HomeExecStart >> $LOGDIR/$NEWSERVNAME.log
-    cd -
+
+    /sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile --user $User -- -s /bin/sh -l $User -c "PWD=$WorkingDirectory $ExecStart" &> $LOGDIR/$NEWSERVNAME.log
 }
 
 serv_stopd(){
