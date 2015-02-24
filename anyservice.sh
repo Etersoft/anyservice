@@ -83,6 +83,7 @@ $AUTOSTRING
 EOF
 
 #TODO check Need monit restart for read new file #bug
+serv monit start
 serv monit reload
 my_return "White while monit is restarting"
 else
