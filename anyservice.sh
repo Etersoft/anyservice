@@ -121,7 +121,8 @@ serv_startd(){
     mkdir -p $LOGDIR
     #TODO chech it
     cd $WorkingDirectory
-    /sbin/start-stop-daemon --start --chuid $User --pidfile $PIDFile --background --make-pidfile --exec $ExecStart >> $LOGDIR/$NEWSERVNAME.log
+    HomeExecStart="HOME=$(eval echo ~$USER) ${ExecStart}"
+    /sbin/start-stop-daemon --start --chuid $User --pidfile $PIDFile --background --make-pidfile --exec $HomeExecStart >> $LOGDIR/$NEWSERVNAME.log
     cd -
 }
 
