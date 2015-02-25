@@ -1,0 +1,13 @@
+[Unit]
+Description=run test sleep
+
+[Service]
+Type=simple
+User=danil
+WorkingDirectory=/tmp/
+ExecStart=sleep 100
+PIDFile=/var/run/mysleep.pid
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

@@ -5,6 +5,7 @@ test_var_init(){
 
 SERVDIR="./"
 SERVFILE="any.service"
+MYANYSERVICE=./anyservice.sh
 
 cat $SERVDIR/$SERVFILE | grep =
 
@@ -17,26 +18,39 @@ echo myWorkingDirectory $WorkingDirectory
 
 test_work(){
 SERVDIR="/etc/systemd-lite"
-my_test_service="mysleep"
+my_test_service="top"
 MYTIMETOSLEEP=15
 
 cp ./${my_test_service}.service $SERVDIR/
 
-./anyservice.sh $my_test_service
-
-#cat /usr/bin/"$my_test_service"*
+$MYANYSERVICE $my_test_service
+$MYANYSERVICE $my_test_service start
 
 cat /etc/monit.d/"$my_test_service"*
 
 sleep $MYTIMETOSLEEP
-monit status "$my_test_service"
+$MYANYSERVICE "$my_test_service" status
+
+#Test
+test_monit_status Running
+mupid="$(monit status | grep -A 3 glu | grep pid | awk '{print $2}')"
+echo $mupid
+
+#Test pid
+ps aux | grep -m1 "$mupid" | grep "$my_test_service" && echo "Pid is correct" || echo "Pid is INCORRECT"
 
 sleep $MYTIMETOSLEEP
-monit stop "$my_test_service"
+$MYANYSERVICE "$my_test_service" stop
 
 sleep $MYTIMETOSLEEP
-monit status "$my_test_service" | grep $MYTIMETOSLEEP && echo OK
+$MYANYSERVICE "$my_test_service" status
 
+#Test pid
+kill $mypid &> /dev/null || echo Killed
+}
+
+test_monit_status(){
+monit status "$my_test_service" | grep -A 3 $MYTIMETOSLEEP | grep "$1" && echo "$1"
 }
 
 test_work
