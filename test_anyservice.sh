@@ -37,7 +37,10 @@ mupid="$(monit status | grep -A 3 glu | grep pid | awk '{print $2}')"
 echo $mupid
 
 #Test pid
-ps aux | grep -m1 "$mupid" | grep "$my_test_service" && echo "Pid is correct" || echo "Pid is INCORRECT"
+ps aux | grep -m1 "$mupid" | grep "$my_test_service" && echo_correct Pid || echo_incorrect Pid
+
+#Test user
+[ "$(ps aux | grep -m1 "$mupid" | awk '{print $1}') " = "root" ] && echo_correct User || echo_incorrect User
 
 sleep $MYTIMETOSLEEP
 $MYANYSERVICE "$my_test_service" stop
@@ -47,6 +50,16 @@ $MYANYSERVICE "$my_test_service" status
 
 #Test pid
 kill $mypid &> /dev/null || echo Killed
+}
+
+echo_correct(){
+echo "$1 is correct"
+return 0
+}
+
+echo_incorrect(){
+echo "$1 is INCORRECT"
+return 1
 }
 
 test_monit_status(){

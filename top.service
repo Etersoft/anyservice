@@ -3,7 +3,7 @@ Description=run test sleep
 
 [Service]
 Type=simple
-User=danil
+User=root
 WorkingDirectory=/tmp/
 ExecStart=sleep 100
 PIDFile=/var/run/mysleep.pid
