@@ -84,7 +84,6 @@ check process $NEWSERVNAME with pidfile $PIDFile
 $AUTOSTRING
 EOF
 
-#TODO check Need monit restart for read new file #bug
 serv monit start
 serv monit reload
 my_return "White while monit is restarting"
@@ -94,7 +93,8 @@ my_return
 fi
 }
 
-need_update_file(){ #return 0 if file non exist or $2 older that $1
+need_update_file(){ 
+    #return 0 if file non exist or $2 older that $1
     #servfile_non_exist
     #example: need_update_file serv monit #if monit older that serv return 0
     if [ ! -e "$2" ] ; then
@@ -117,7 +117,7 @@ monit_install(){
 }
 
 #=============== stop and start section ==========================
-# *d command really start serv, without d run d command over monit
+# *d command really start serv, without d run command over monit
 
 serv_startd(){
     LOGDIR="$DEFAULTLOGDIR/$NEWSERVNAME/"
