@@ -123,7 +123,8 @@ serv_startd(){
     LOGDIR="$DEFAULTLOGDIR/$NEWSERVNAME/"
     mkdir -p $LOGDIR
     /sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile --user $User -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; exec $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
-    #TODO write only no empty string # $? &&
+    #TODO write only no empty string # 
+    #[ $? ] &&
     ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
 }
 
@@ -155,8 +156,8 @@ restart_service(){
 
 status_service(){
     echo "$MYMONIT status $NEWSERVNAME"
-    #TODO close monit bug: show status of all monitored service
-    $MYMONIT status $NEWSERVNAME
+    #TODO check
+    $MYMONIT status | grep -A13 $NEWSERVNAME
     RETVAL="$?"
     my_return
 }
@@ -199,6 +200,7 @@ remove_service(){
     rm -f "$MONITFILE"
     RETVAL="$?"
     my_return "Files removed $MONITFILE"
+    serv monit reload
 }
 
 my_return(){
@@ -222,7 +224,7 @@ my_exit_file(){
 }
 
 help(){
-    echo "anyservice.sh <service file name> [start|stop|restart|status]"
+    echo "anyservice.sh <service file name> [start|stop|restart|status|remove]"
     echo "example: put service file to $SERVDIR and run # anyservice.sh odoo"
     my_return
 }
