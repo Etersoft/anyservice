@@ -125,7 +125,13 @@ serv_startd(){
     /sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile --user $User -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; exec $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
     #TODO write only no empty string # 
     #[ $? ] &&
-    ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
+    write_non_empty "$(ps aux | grep -v "grep" | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}')" "$PIDFile"
+}
+
+write_non_empty(){
+    if [ -n "$1" ] ; then
+        echo $1 > $2
+    fi
 }
 
 serv_stopd(){

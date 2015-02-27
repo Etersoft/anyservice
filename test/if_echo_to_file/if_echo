@@ -1,0 +1,12 @@
+#!/bin/sh 
+
+empty=""
+not_epty="1"
+
+write_non_empty(){
+    if [ -n "$1" ] ; then 
+	echo $1 >> 1
+    fi
+}
+
+write_non_empty $1
