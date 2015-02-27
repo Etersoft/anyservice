@@ -22,7 +22,7 @@ init_serv(){
 
     if ! [ -n "$SERVNAME" ] && ! [ -e "$SERVFILE" ] ; then
         RETVAL=1
-	my_return
+	my_exit "Config file non exist $SERVFILE"
     fi
 
 }
@@ -123,8 +123,6 @@ serv_startd(){
     LOGDIR="$DEFAULTLOGDIR/$NEWSERVNAME/"
     mkdir -p $LOGDIR
     /sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile --user $User -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; exec $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
-    #TODO write only no empty string # 
-    #[ $? ] &&
     write_non_empty "$(ps aux | grep -v "grep" | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}')" "$PIDFile"
 }
 

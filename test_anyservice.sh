@@ -1,11 +1,12 @@
 #!/bin/bash
 
+MYANYSERVICE=./anyservice.sh
+
 test_var_init(){
 . ./anyservice.sh any
 
 SERVDIR="./"
 SERVFILE="any.service"
-MYANYSERVICE=./anyservice.sh
 
 cat $SERVDIR/$SERVFILE | grep =
 

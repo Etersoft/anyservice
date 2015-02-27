@@ -5,8 +5,8 @@ Description=run test sleep
 Type=simple
 User=root
 WorkingDirectory=/tmp/
-ExecStart=sleep 100
-PIDFile=/var/run/mysleep.pid
+ExecStart=top
+PIDFile=/var/run/top.pid
 Restart=always
 
 [Install]
