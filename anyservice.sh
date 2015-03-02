@@ -177,7 +177,7 @@ restart_service(){
 }
 
 summary_service(){
-    echo "$MYMONIT status $NEWSERVNAME"
+    echo "$MYMONIT summary $NEWSERVNAME"
     $MYMONIT summary | grep $NEWSERVNAME
     RETVAL="$?"
     my_return
