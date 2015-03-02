@@ -6,7 +6,7 @@ MYNAMEIS="$0"
 SCRIPTNAME="$(basename $0)"
 MYMONIT="monit"
 VERBOSE=false
-SERVDIR="/etc/systemd-lite"
+SERVDIR="/etc/systemd-lite/"
 RUNDIR="/var/run/$SCRIPTNAME/"
 DEFAULTLOGDIR="/var/log/$SCRIPTNAME/"
 AUTOSTRING="# File created automatic by $MYNAMEIS"
@@ -20,9 +20,13 @@ init_serv(){
     SERVFILE="$SERVDIR/${SERVNAME}.service"
     NEWSERVNAME="${SERVNAME}"
 
+    if [ list = "$SERVNAME" ] ; then
+	list_service
+    fi
+
     if ! [ -n "$SERVNAME" ] && ! [ -e "$SERVFILE" ] ; then
         RETVAL=1
-	my_exit "Config file non exist $SERVFILE"
+	my_exit_echo "Config file non exist $SERVFILE"
     fi
 
 }
@@ -171,6 +175,7 @@ status_service(){
     my_return
 }
 
+#TODO need refactor, rewrite
 my_getopts(){
     if ! [ -n "$1" ] ; then 
 	return 1
@@ -199,6 +204,9 @@ my_getopts(){
 	 remove)
             remove_service
             ;;
+	 list)
+	    list_service
+	    ;;
          *)
             help
             ;;
@@ -212,6 +220,22 @@ remove_service(){
     serv monit reload
 }
 
+list_service(){
+    RETVAL=0
+    description_string="Description="
+    
+#    echo ""
+    echo "List of $SCRIPTNAME service files in $SERVDIR"
+    echo ""
+
+    for i in ${SERVDIR}/* ; do
+	echo "$(basename $i)" 
+	cat "$i" | grep "$description_string" | sed "s/$description_string/ /g"
+        echo ""
+    done
+
+    my_exit "List"
+}
 my_return(){
     $VERBOSE && echo "$1"
     return $RETVAL
@@ -221,6 +245,12 @@ my_exit(){
     $VERBOSE && echo "$1"
     exit $RETVAL
 }
+
+my_exit_echo(){
+    echo "$1"
+    exit $RETVAL
+}
+
 
 my_return_file(){
     RETVAL=1 
@@ -233,8 +263,11 @@ my_exit_file(){
 }
 
 help(){
-    echo "anyservice.sh <service file name> [start|stop|restart|status|remove]"
-    echo "example: put service file to $SERVDIR and run # anyservice.sh odoo"
+    echo ""
+    echo "$SCRIPTNAME <service file name> [start|stop|restart|status|remove|list]"
+    echo "example: put service file to $SERVDIR and run # $SCRIPTNAME odoo"
+    echo ""
+    echo "List of service $SCRIPTNAME list"
     my_return
 }
 
