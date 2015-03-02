@@ -28,7 +28,11 @@ init_serv(){
 	help
     fi
 
-    if ! [ -n "$SERVNAME" ] || ! [ -e "$SERVFILE" ] ; then
+    if [ -z "$SERVNAME" ] ; then
+	help
+    fi
+
+    if ! [ -e "$SERVFILE" ] ; then
         RETVAL=1
 	my_exit_echo "Config file non exist $SERVFILE"
     fi
@@ -172,6 +176,13 @@ restart_service(){
     my_return
 }
 
+summary_service(){
+    echo "$MYMONIT status $NEWSERVNAME"
+    $MYMONIT summary | grep $NEWSERVNAME
+    RETVAL="$?"
+    my_return
+}
+
 status_service(){
     echo "$MYMONIT status $NEWSERVNAME"
     #TODO check
@@ -196,6 +207,9 @@ my_getopts(){
             ;;
          restart)
 	    restart_service
+            ;;
+	 summary)
+            summary_service
             ;;
 	 status)
             status_service
@@ -268,7 +282,7 @@ my_exit_file(){
 }
 
 help(){
-    echo "$SCRIPTNAME <service file name> [start|stop|restart|status|remove|list]"
+    echo "$SCRIPTNAME <service file name> [start|stop|restart|status|summary|remove|list]"
     echo "example: put service file to $SERVDIR and run # $SCRIPTNAME odoo"
     echo "example: $SCRIPTNAME <list|--help> #List of services or help"
     echo ""
