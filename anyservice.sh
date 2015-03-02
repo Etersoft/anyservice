@@ -24,6 +24,10 @@ init_serv(){
 	list_service
     fi
 
+    if [ --help = "$SERVNAME" ] || [ -h = "$SERVNAME" ] ; then
+	help
+    fi
+
     if ! [ -n "$SERVNAME" ] && ! [ -e "$SERVFILE" ] ; then
         RETVAL=1
 	my_exit_echo "Config file non exist $SERVFILE"
@@ -263,12 +267,11 @@ my_exit_file(){
 }
 
 help(){
-    echo ""
     echo "$SCRIPTNAME <service file name> [start|stop|restart|status|remove|list]"
     echo "example: put service file to $SERVDIR and run # $SCRIPTNAME odoo"
+    echo "example: $SCRIPTNAME <list|--help> #List of services or help"
     echo ""
-    echo "List of service $SCRIPTNAME list"
-    my_return
+    my_exit
 }
 
 run(){
