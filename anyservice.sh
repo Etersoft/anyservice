@@ -290,6 +290,7 @@ help(){
 }
 
 run(){
+    #TODO rewrite for start from my_getopts $2
     init_serv $1 || help
     read_config
     check_conf || my_exit "Dir non exist: $WorkingDirectory "
