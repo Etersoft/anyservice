@@ -24,7 +24,7 @@ init_serv(){
 	list_service
     fi
 
-    if [ --help = "$SERVNAME" ] || [ -h = "$SERVNAME" ] ; then
+    if [ --help = "$SERVNAME" ] || [ -h = "$SERVNAME" ] || [ help = "$SERVNAME" ]; then
 	help
     fi
 
