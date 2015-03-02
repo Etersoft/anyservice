@@ -145,6 +145,7 @@ serv_stopd(){
     if [ -s "$PIDFile" ] ; then
         /sbin/start-stop-daemon --stop --pidfile $PIDFile
     else
+        RETVAL="$?"
 	my_exit "No $PIDFile"
     fi
 }
