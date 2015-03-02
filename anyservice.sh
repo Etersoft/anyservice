@@ -28,7 +28,7 @@ init_serv(){
 	help
     fi
 
-    if ! [ -n "$SERVNAME" ] && ! [ -e "$SERVFILE" ] ; then
+    if ! [ -n "$SERVNAME" ] || ! [ -e "$SERVFILE" ] ; then
         RETVAL=1
 	my_exit_echo "Config file non exist $SERVFILE"
     fi
