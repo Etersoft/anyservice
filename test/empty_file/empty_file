@@ -1,0 +1,10 @@
+#!/bin/bash
+
+
+PIDFile=$1
+
+    if [ -s "$PIDFile" ] ; then
+	echo "file $PIDFile exist and not empty"
+    else
+	echo "not file"
+    fi

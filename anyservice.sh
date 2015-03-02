@@ -123,7 +123,8 @@ serv_startd(){
     LOGDIR="$DEFAULTLOGDIR/$NEWSERVNAME/"
     mkdir -p $LOGDIR
     /sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile --user $User -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; exec $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
-    write_non_empty "$(ps aux | grep -v "grep" | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}')" "$PIDFile"
+    
+    ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
 }
 
 write_non_empty(){
@@ -133,7 +134,11 @@ write_non_empty(){
 }
 
 serv_stopd(){
-    /sbin/start-stop-daemon --stop --pidfile $PIDFile
+    if [ -s "$PIDFile" ] ; then
+        /sbin/start-stop-daemon --stop --pidfile $PIDFile
+    else
+	my_exit "No $PIDFile"
+    fi
 }
 
 start_service(){
