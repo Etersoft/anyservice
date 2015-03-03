@@ -187,7 +187,7 @@ summary_service(){
 status_service(){
     echo "$MYMONIT status $NEWSERVNAME"
     #TODO check
-    $MYMONIT status | grep -A13 $NEWSERVNAME
+    $MYMONIT status | grep -A20 $NEWSERVNAME|grep -B20 'data collected' -m1
     RETVAL="$?"
     my_return
 }
