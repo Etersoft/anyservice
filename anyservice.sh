@@ -9,7 +9,7 @@ VERBOSE=false
 SERVDIR="/etc/systemd-lite/"
 RUNDIR="/var/run/$SCRIPTNAME/"
 DEFAULTLOGDIR="/var/log/$SCRIPTNAME/"
-AUTOSTRING="# File created automatic by $MYNAMEIS"
+AUTOSTRING="#The file has been created automatically with $MYNAMEIS"
 
 init_serv(){
     mkdir -p $SERVDIR
@@ -34,7 +34,7 @@ init_serv(){
 
     if ! [ -e "$SERVFILE" ] ; then
         RETVAL=1
-	my_exit_echo "Config file non exist $SERVFILE"
+	my_exit_echo "Config file $SERVFILE has not been found"
     fi
 
 }
@@ -47,7 +47,7 @@ read_config(){
 	    ExecStart) ExecStart="$var" ;;
 	    Restart) Restart="$var" ;;
 	    PIDFile) PIDFile="$var" ;;
-	    *)     $VERBOSE && echo "Unsuported systemd option $varname $var" ;;
+	    *)     $VERBOSE && echo "Found an unsupported systemd option: $varname $var" ;;
 	esac
     done < $SERVFILE
     #TODO grep -v ^# | grep =
@@ -157,6 +157,7 @@ serv_stopd(){
 start_service(){
     echo "$MYMONIT start $NEWSERVNAME"
     $MYMONIT monitor $NEWSERVNAME
+    sleep 2
     $MYMONIT start $NEWSERVNAME
     RETVAL="$?"
     my_return
@@ -273,12 +274,12 @@ my_exit_echo(){
 
 my_return_file(){
     RETVAL=1 
-    my_return "File already exist $1"
+    my_return "The file $1 exists"
 }
 
 my_exit_file(){
     RETVAL=1 
-    my_exit "File already exist $1"
+    my_exit "The file $1 exists"
 }
 
 help(){
