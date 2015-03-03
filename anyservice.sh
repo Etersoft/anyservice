@@ -294,7 +294,7 @@ run(){
     #TODO rewrite for start from my_getopts $2
     init_serv $1 || help
     read_config
-    check_conf || my_exit "Dir non exist: $WorkingDirectory "
+    check_conf || my_exit "Dirеctory $WorkingDirectory does not exist."
     create_monit || my_return_file $MONITFILE
     my_getopts $2
 }
