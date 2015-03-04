@@ -17,40 +17,40 @@ echo myWorkingDirectory $WorkingDirectory
 ! [ -n "$WorkingDirectory" ] && echo "test var init FAIL"
 }
 
-test_work(){
-SERVDIR="/etc/systemd-lite"
-my_test_service="top"
-MYTIMETOSLEEP=45
+	test_work(){
+	SERVDIR="/etc/systemd-lite"
+	my_test_service="top"
+	MYTIMETOSLEEP=45
 
-cp ./${my_test_service}.service $SERVDIR/
+	cp ./${my_test_service}.service $SERVDIR/
 
-$MYANYSERVICE $my_test_service
-$MYANYSERVICE $my_test_service start
+	$MYANYSERVICE $my_test_service
+	$MYANYSERVICE $my_test_service start
 
-cat /etc/monit.d/"$my_test_service"*
+	cat /etc/monit.d/"$my_test_service"*
 
-sleep $MYTIMETOSLEEP
-$MYANYSERVICE "$my_test_service" status
+	sleep $MYTIMETOSLEEP
+	$MYANYSERVICE "$my_test_service" status
 
-#Test
-test_monit_status Running
-mupid="$(monit status | grep -A 3 glu | grep pid | awk '{print $2}')"
-echo $mupid
+	#Test
+	test_monit_status Running
+	mupid="$(monit status | grep -A 3 glu | grep pid | awk '{print $2}')"
+	echo $mupid
 
-#Test pid
-ps aux | grep -m1 "$mupid" | grep "$my_test_service" && echo_correct Pid || echo_incorrect Pid
+	#Test pid
+	ps aux | grep -m1 "$mupid" | grep "$my_test_service" && echo_correct Pid || echo_incorrect Pid
 
-#Test user
-[ "$(ps aux | grep -m1 "$mupid" | awk '{print $1}') " = "root" ] && echo_correct User || echo_incorrect User
+	#Test user
+	[ "$(ps aux | grep -m1 "$mupid" | awk '{print $1}') " = "root" ] && echo_correct User || echo_incorrect User
 
-sleep $MYTIMETOSLEEP
-$MYANYSERVICE "$my_test_service" stop
+	sleep $MYTIMETOSLEEP
+	$MYANYSERVICE "$my_test_service" stop
 
-sleep $MYTIMETOSLEEP
-$MYANYSERVICE "$my_test_service" status
+	sleep $MYTIMETOSLEEP
+	$MYANYSERVICE "$my_test_service" status
 
-#Test pid
-kill $mypid &> /dev/null || echo Killed
+	#Test pid
+	kill $mypid &> /dev/null || echo Killed
 }
 
 echo_correct(){
