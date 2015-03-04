@@ -20,7 +20,7 @@ echo myWorkingDirectory $WorkingDirectory
 test_work(){
 SERVDIR="/etc/systemd-lite"
 my_test_service="top"
-MYTIMETOSLEEP=15
+MYTIMETOSLEEP=45
 
 cp ./${my_test_service}.service $SERVDIR/
 
