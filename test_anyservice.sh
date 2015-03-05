@@ -17,7 +17,7 @@ echo myWorkingDirectory $WorkingDirectory
 ! [ -n "$WorkingDirectory" ] && echo "test var init FAIL"
 }
 
-	test_work(){
+test_work(){
 	SERVDIR="/etc/systemd-lite"
 	my_test_service="top"
 	MYTIMETOSLEEP=45
