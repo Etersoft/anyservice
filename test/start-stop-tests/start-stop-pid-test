@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PIDFile=./test.pid
+PIDFile=$(pwd)/test.pid
 User=$USER
 WorkingDirectory=./
 my_test_service=sleep
@@ -15,7 +15,7 @@ NEWSERVNAME="test"
 /sbin/start-stop-daemon --start --pidfile $PIDFile --make-pidfile --background --user $User --startas "$ExecStart" &> $LOGDIR/$NEWSERVNAME.log
 
 
-realpid=$(ps aux | grep -m1 "^root.*${my_test_service}")
+realpid=$(ps aux | grep -v grep | grep -m1 ".*${my_test_service}")
 
 cat $PIDFile
 echo $realpid
