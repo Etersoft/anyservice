@@ -1,6 +1,12 @@
 #!/bin/bash
 
-MYANYSERVICE=./anyservice.sh
+MYANYSERVICE=anyservice
+VERBOSE="false"
+
+
+update_anyservice(){
+    cp -u "./${MYANYSERVICE}.sh" /usr/bin/$MYANYSERVICE
+}
 
 test_var_init(){
 . ./anyservice.sh any
@@ -20,51 +26,69 @@ echo myWorkingDirectory $WorkingDirectory
 test_work(){
 	SERVDIR="/etc/systemd-lite"
 	my_test_service="top"
-	MYTIMETOSLEEP=45
-
+	MYTIMETOSLEEP=65
+	MYPID="/var/run/${my_test_service}.pid"
+	
+	#Initilisation	
 	cp ./${my_test_service}.service $SERVDIR/
+	my_run $MYANYSERVICE $my_test_service
+	my_run $MYANYSERVICE $my_test_service start
 
-	$MYANYSERVICE $my_test_service
-	$MYANYSERVICE $my_test_service start
-
-	cat /etc/monit.d/"$my_test_service"*
-
+	#Check monit
+	$VERBOSE && cat /etc/monit.d/"$my_test_service"*
 	sleep $MYTIMETOSLEEP
-	$MYANYSERVICE "$my_test_service" status
+	my_run $MYANYSERVICE "$my_test_service" status
 
-	#Test
+	#Tests
 	test_monit_status Running
-	mupid="$(monit status | grep -A 3 glu | grep pid | awk '{print $2}')"
-	echo $mupid
 
 	#Test pid
+	#TODO need sleep while monit updates status
+	mupid="$(monit status | grep -A 3 $my_test_service | grep pid | awk '{print $2}')"
+	echo $mupid
 	ps aux | grep -m1 "$mupid" | grep "$my_test_service" && echo_correct Pid || echo_incorrect Pid
+	cat $MYPID
+	[ "$(ps aux | grep -m1 "^root.*${my_test_service}" | awk '{print $2}')" = "$(cat $MYPID)" ] && echo_correct Pid || echo_incorrect Pid
 
 	#Test user
 	[ "$(ps aux | grep -m1 "$mupid" | awk '{print $1}') " = "root" ] && echo_correct User || echo_incorrect User
 
 	sleep $MYTIMETOSLEEP
-	$MYANYSERVICE "$my_test_service" stop
+	my_run $MYANYSERVICE "$my_test_service" stop
 
 	sleep $MYTIMETOSLEEP
-	$MYANYSERVICE "$my_test_service" status
+	my_run $MYANYSERVICE "$my_test_service" status
 
 	#Test pid
 	kill $mypid &> /dev/null || echo Killed
 }
 
+my_run(){
+    if [ "$VERBOSE" = true ] ; then 
+        $1 $2 $3 
+    else 
+	$1 $2 $3 &> /dev/null
+    fi
+}
+
 echo_correct(){
-echo "$1 is correct"
-return 0
+    echo "$1 is correct"
+    return 0
 }
 
 echo_incorrect(){
-echo "$1 is INCORRECT"
-return 1
+    echo "$1 is INCORRECT"
+    return 1
 }
 
 test_monit_status(){
-monit status "$my_test_service" | grep -A 3 $MYTIMETOSLEEP | grep "$1" && echo "$1"
+    my_run monit status "$my_test_service" | grep -A 3 $MYTIMETOSLEEP | grep "$1" && echo "$1"
 }
 
+test_result(){
+    echo ""
+    $? && echo "Tests DONE" || echo "Tests FAIL"
+}
+
+update_anyservice
 test_work
