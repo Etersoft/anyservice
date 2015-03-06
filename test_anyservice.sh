@@ -92,3 +92,4 @@ test_result(){
 
 update_anyservice
 test_work
+test_result
