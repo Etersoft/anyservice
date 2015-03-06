@@ -73,12 +73,14 @@ my_run(){
 
 echo_correct(){
     echo "$1 is correct"
-    return 0
+    RETVAL="0"
+    return $RETVAL
 }
 
 echo_incorrect(){
     echo "$1 is INCORRECT"
-    return 1
+    RETVAL="1"
+    return $RETVAL
 }
 
 test_monit_status(){
@@ -87,7 +89,7 @@ test_monit_status(){
 
 test_result(){
     echo ""
-    $? && echo "Tests DONE" || echo "Tests FAIL"
+    [ "$RETVAL" = 0 ] && echo "Tests DONE" || echo "Tests FAIL"
 }
 
 update_anyservice
