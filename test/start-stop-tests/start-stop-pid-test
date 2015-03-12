@@ -11,8 +11,8 @@ NEWSERVNAME="test"
 #/sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile --user $User -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; exec $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
 #/sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile -b --user $User -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; exec $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
 
+#TODO give start command arguments after -- #example: sleep -- 100
 /sbin/start-stop-daemon --start --pidfile $PIDFile --make-pidfile --background --user $User --startas "$ExecStart" &> $LOGDIR/$NEWSERVNAME.log
-
 
 realpid=$(ps aux | grep -v grep | grep -m1 ".*${ExecStart}" | awk '{print $2}')
 
