@@ -14,9 +14,9 @@ NEWSERVNAME="test"
 /sbin/start-stop-daemon --start --pidfile $PIDFile --make-pidfile --background --user $User --startas "$ExecStart" &> $LOGDIR/$NEWSERVNAME.log
 
 
-realpid=$(ps aux | grep -v grep | grep -m1 ".*${ExecStart} | awk '{print $2}'")
+realpid=$(ps aux | grep -v grep | grep -m1 ".*${ExecStart}" | awk '{print $2}')
 
 #cat $PIDFile
 #echo $realpid
 
-[ "$(cat $PIDFile)" = "$realpid" ] && echo "Pid correct"
+[ "$(cat $PIDFile)" = "$realpid" ] && echo "Тест прошёл" || echo "Тест не прошёл"
