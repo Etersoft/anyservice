@@ -3,7 +3,7 @@
 PIDFile=$(pwd)/test.pid
 User=$USER
 WorkingDirectory=./
-ExecStart="/bin/sleep 100"
+ExecStart="test_process.sh"
 LOGDIR=./
 NEWSERVNAME="test"
 
@@ -14,9 +14,26 @@ NEWSERVNAME="test"
 #TODO give start command arguments after -- #example: sleep -- 100
 /sbin/start-stop-daemon --start --pidfile $PIDFile --make-pidfile --background --user $User --startas "$ExecStart" &> $LOGDIR/$NEWSERVNAME.log
 
-realpid=$(ps aux | grep -v grep | grep -m1 ".*${ExecStart}" | awk '{print $2}')
+pid_test(){
+    realpid=$(cat my.pid)
+    realpid=$(ps aux | grep -v grep | grep -m1 ".*${ExecStart}" | awk '{print $2}')
+    #cat $PIDFile
+    #echo $realpid
+    my_assert_equals "$(cat $PIDFile)" "$realpid" "pid"
+}
 
-#cat $PIDFile
-#echo $realpid
+user_test(){
+    realuser=$(cat my.user)
+    my_assert_equals "$User" $(cat my.user) User
+}
 
-[ "$(cat $PIDFile)" = "$realpid" ] && echo "Тест прошёл" || echo "Тест не прошёл"
+dir_test(){
+    realdir=$(cat my.dir)
+    my_assert_equals "/home/$User" "$(cat my.dir)" "Dir"
+}
+
+my_assert_equals(){
+    [ "$1" = "$2" ] && echo "Тест $3 прошёл" || echo "Тест $3 не прошёл"
+}
+
+pid_test
