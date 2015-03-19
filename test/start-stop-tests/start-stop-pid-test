@@ -3,7 +3,7 @@
 PIDFile=$(pwd)/test.pid
 User=$USER
 WorkingDirectory=$(pwd)
-ExecStart="./test_process.sh"
+ExecStart="./test_process"
 LOGDIR=./
 NEWSERVNAME="test"
 
@@ -12,8 +12,8 @@ NEWSERVNAME="test"
 #/sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile -b --user $User -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; exec $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
 
 #TODO give start command arguments after -- #example: sleep -- 100
-#/sbin/start-stop-daemon --start --pidfile $PIDFile --make-pidfile --background --user $User --startas "$WorkingDirectory/$ExecStart" &> $LOGDIR/$NEWSERVNAME.log
-/sbin/start-stop-daemon --start --pidfile $PIDFile --make-pidfile --user $User --startas "$WorkingDirectory/$ExecStart" &> $LOGDIR/$NEWSERVNAME.log
+/sbin/start-stop-daemon --start --pidfile $PIDFile --make-pidfile --background --user $User --exec "$WorkingDirectory/$ExecStart" &> $LOGDIR/$NEWSERVNAME.log
+#/sbin/start-stop-daemon --start --pidfile $PIDFile --make-pidfile --user $User --startas "$WorkingDirectory/$ExecStart" &> $LOGDIR/$NEWSERVNAME.log
 echo "start-stop exit status $?" >> $LOGDIR/$NEWSERVNAME.log
 
 pid_test(){
@@ -46,3 +46,11 @@ pid_test
 user_test
 dir_test
 home_test
+
+test_bg(){
+    echo "Test without background"
+    /sbin/start-stop-daemon --start --pidfile $PIDFile --make-pidfile --user $User --exec "$WorkingDirectory/${ExecStart}_bg" &> $LOGDIR/$NEWSERVNAME.log
+    pid_test
+}
+
+test_bg
