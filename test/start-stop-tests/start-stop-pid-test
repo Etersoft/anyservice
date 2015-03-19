@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PIDFile=$(pwd)/test.pid
-User=guest
+User="guest"
 WorkingDirectory=$(pwd)
 ExecStart="./test_process"
 LOGDIR=./
