@@ -45,7 +45,7 @@ my_assert_equals(){
 pid_test
 user_test
 dir_test
-home_test
+#home_test
 
 test_bg(){
     echo "Test without background"
