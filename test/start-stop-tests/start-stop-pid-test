@@ -12,16 +12,17 @@ NEWSERVNAME="test"
 #/sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile -b --user $User -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; exec $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
 
 #TODO give start command arguments after -- #example: sleep -- 100
-/sbin/start-stop-daemon --start --pidfile $PIDFile --make-pidfile --background --user $User --exec "$WorkingDirectory/$ExecStart" &> $LOGDIR/$NEWSERVNAME.log
+/sbin/start-stop-daemon --start --pidfile $PIDFile --background --make-pidfile --user $User --exec "$WorkingDirectory/$ExecStart" &> $LOGDIR/$NEWSERVNAME.log
 #/sbin/start-stop-daemon --start --pidfile $PIDFile --make-pidfile --user $User --startas "$WorkingDirectory/$ExecStart" &> $LOGDIR/$NEWSERVNAME.log
 echo "start-stop exit status $?" >> $LOGDIR/$NEWSERVNAME.log
+
 
 pid_test(){
     realpid=$(cat my.pid)
     #cat $PIDFile
     #echo $realpid
     sspid=$(cat $PIDFile)
-    my_assert_equals "$sspid" "$realpid" "pid $realpid $sspid"
+    my_assert_equals "$sspid" "$realpid" "ss-pid $sspid $realpid"
 }
 
 user_test(){
@@ -39,6 +40,8 @@ home_test(){
 my_assert_equals(){
     [ "$1" = "$2" ] && echo "Тест $3 прошёл" || echo "Тест $3 не прошёл"
 }
+
+#sleep 15
 
 #cd $WorkingDirectory
 #ls
