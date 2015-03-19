@@ -1,7 +1,7 @@
 #!/bin/sh
 
 PIDFile=$(pwd)/test.pid
-User=$USER
+User=guest
 WorkingDirectory=$(pwd)
 ExecStart="./test_process"
 LOGDIR=./
@@ -12,7 +12,7 @@ NEWSERVNAME="test"
 #/sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile -b --user $User -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; exec $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
 
 #TODO give start command arguments after -- #example: sleep -- 100
-/sbin/start-stop-daemon --start --pidfile $PIDFile --background --make-pidfile --user $User --exec "$WorkingDirectory/$ExecStart" &> $LOGDIR/$NEWSERVNAME.log
+/sbin/start-stop-daemon --start --pidfile $PIDFile --background --make-pidfile --chuid $User --exec "$WorkingDirectory/$ExecStart" &> $LOGDIR/$NEWSERVNAME.log
 #/sbin/start-stop-daemon --start --pidfile $PIDFile --make-pidfile --user $User --startas "$WorkingDirectory/$ExecStart" &> $LOGDIR/$NEWSERVNAME.log
 echo "start-stop exit status $?" >> $LOGDIR/$NEWSERVNAME.log
 
