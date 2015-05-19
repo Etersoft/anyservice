@@ -44,21 +44,10 @@ my_assert_equals(){
     #[ "$1" = "$2" ] && echo "Тест $3 прошёл" || echo "Тест $3 не прошёл"
 }
 
-#sleep 15
-
-#cd $WorkingDirectory
-#ls
-#testPid
-#testUser
-#testDir
-#testHome
-
-my_test_bg(){
-    echo "Test without background"
+test_bg(){
+    #    echo "Test without background"
     /sbin/start-stop-daemon --start --pidfile $PIDFile --make-pidfile --user $User --exec "$WorkingDirectory/${ExecStart}_bg" &> $LOGDIR/$NEWSERVNAME.log
     testPid
 }
-
-#my_test_bg
 
 . $shunit2 #include test suite
