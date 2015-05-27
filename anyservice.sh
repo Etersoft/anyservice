@@ -5,7 +5,7 @@ RETVAL=1
 MYNAMEIS="$0"
 SCRIPTNAME="$(basename $0)"
 MYMONIT="monit"
-VERBOSE=false
+VERBOSE=true
 SERVDIR="/etc/systemd-lite/"
 RUNDIR="/var/run/$SCRIPTNAME/"
 DEFAULTLOGDIR="/var/log/$SCRIPTNAME/"
@@ -126,6 +126,12 @@ monit_install(){
     #TODO change $MYMONIT to $MONITPACKAGE
     epmq $MYMONIT || epmi -y $MYMONIT
     serv monit start #TODO check it and add depends on epm
+    RETVAL="$?"
+}
+
+is_monit_installed(){
+    epmq $MYMONIT || my_return "Monit not installed. Trying to install..."
+    monit_install || my_exit "Monit not installed."
 }
 
 #=============== stop and start section ==========================
@@ -275,7 +281,7 @@ my_exit_echo(){
 
 my_return_file(){
     RETVAL=1 
-    my_return "The file $1 exists"
+    my_return "The file ${1} exists"
 }
 
 my_exit_file(){
@@ -285,9 +291,8 @@ my_exit_file(){
 
 help(){
     echo "$SCRIPTNAME <service file name> [start|stop|restart|status|summary|remove|list]"
-    echo "example: put service file to $SERVDIR and run # $SCRIPTNAME odoo"
+    echo "example: put service file to $SERVDIR/odoo.service and run # $SCRIPTNAME odoo"
     echo "example: $SCRIPTNAME <list|--help> #List of services or help"
-    echo ""
     my_exit
 }
 
@@ -295,6 +300,8 @@ run(){
     #TODO rewrite for start from my_getopts $2
     init_serv $1 || help
     read_config
+    is_monit_installed
+    #monit_install || my_exit "Monit $WorkingDirectory does not exist."
     check_conf || my_exit "Dirеctory $WorkingDirectory does not exist."
     create_monit || my_return_file $MONITFILE
     my_getopts $2
