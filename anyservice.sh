@@ -96,8 +96,8 @@ check process $NEWSERVNAME with pidfile $PIDFile
 $AUTOSTRING
 EOF
 
-serv monit start
-serv monit reload
+serv --quiet monit start
+serv --quiet monit reload
 my_return "White while monit is restarting"
 else
 RETVAL=1
@@ -124,13 +124,13 @@ is_auto_created(){
 
 monit_install(){
     #TODO change $MYMONIT to $MONITPACKAGE
-    epmq $MYMONIT || epmi -y $MYMONIT
-    serv monit start #TODO check it and add depends on epm
+    epmq --quiet $MYMONIT &> /dev/null || epmi -y $MYMONIT
+    serv --quiet monit start #TODO check it and add depends on epm
     RETVAL="$?"
 }
 
 is_monit_installed(){
-    epmq $MYMONIT || my_return "Monit not installed. Trying to install..."
+    epmq --quiet $MYMONIT &> /dev/null || my_return "Monit not installed. Trying to install..." 
     monit_install || my_exit "Monit not installed."
 }
 
@@ -244,7 +244,7 @@ remove_service(){
     rm -f "$MONITFILE"
     RETVAL="$?"
     my_return "Files removed $MONITFILE"
-    serv monit reload
+    serv --quiet monit reload
 }
 
 list_service(){
