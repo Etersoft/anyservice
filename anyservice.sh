@@ -5,7 +5,7 @@ RETVAL=1
 MYNAMEIS="$0"
 SCRIPTNAME="$(basename $0)"
 MYMONIT="monit"
-VERBOSE=true
+VERBOSE=false
 SERVDIR="/etc/systemd-lite/"
 RUNDIR="/var/run/$SCRIPTNAME/"
 DEFAULTLOGDIR="/var/log/$SCRIPTNAME/"
@@ -141,7 +141,7 @@ serv_startd(){
     LOGDIR="$DEFAULTLOGDIR/$NEWSERVNAME/"
     mkdir -p $LOGDIR
     /sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile --user $User \
-	 -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; exec $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
+	 -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
     
     ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
 }
