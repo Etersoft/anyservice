@@ -1,12 +1,15 @@
 #!/bin/sh
 
-PIDFile=$(pwd)/test.pid
 User="guest"
-WorkingDirectory=$(realpath .)
+WorkingDirectory=/tmp/test_test
+ScriptDir=$(realpath .)
+PIDFile=$ScriptDir/test.pid
 ExecStart="test_process"
 echo $WorkingDirectory
-LOGDIR=$WorkingDirectory/
+LOGDIR=$ScriptDir
 NEWSERVNAME="test"
+
+#mkdir -p $WorkingDirectory
 
 #Install test suite: # wget http://shunit2.googlecode.com/files/shunit2-2.1.6.tgz && tar zxvf shunit2-2.1.6.tgz
 shunit2=/srv/danil/Projects/createPackage/shunit2/shunit2-2.1.6/src/shunit2
@@ -15,22 +18,28 @@ my_start(){
     echo runned
 
     background_dir=$WorkingDirectory/test_${1}/
-    #mkdir -p $background_dir
+#    mkdir -p $background_dir
 
     #TODO give start command arguments after -- #example: sleep -- 100
     sudo /sbin/start-stop-daemon --start --pidfile $PIDFile $1 \
-	--make-pidfile -c $User --exec $WorkingDirectory/$ExecStart --startas "$WorkingDirectory/$ExecStart" -- $background_dir &> $LOGDIR/$NEWSERVNAME_$1.log
-    echo "start-stop exit status $?" >> $LOGDIR/$NEWSERVNAME.log
-    
+	--make-pidfile -c $User --exec $ScriptDir/$ExecStart --startas "$ScriptDir/$ExecStart" -- $background_dir $(get_home_dir $User) &> $LOGDIR/$NEWSERVNAME$1.log
+    RET=$?
+    echo "start-stop exit status $RET" >> $LOGDIR/$NEWSERVNAME$1.log
+    return $RET
 }
 
-test4shunit2_with_background(){
+test_with_background(){
     #sudo /sbin/start-stop-daemon --start --pidfile $PIDFile --background --make-pidfile --chuid $User --exec "$WorkingDirectory/$ExecStart" &> $LOGDIR/$NEWS
     my_start "--background"
-    cd $background_dir
+}
+
+get_home_dir(){
+    getent passwd "$1" | cut -d: -f6
 }
 
 testPid(){
+    sleep 1
+    cd $background_dir
     realpid=$(cat my.pid)
     #cat $PIDFile
     #echo $realpid
@@ -59,47 +68,7 @@ my_assert_equals(){
     assertEquals "$3" "$1" "$2"
 }
 
-_test_bg(){
-    #    echo "Test without background"
-    /sbin/start-stop-daemon --start --pidfile $PIDFile --make-pidfile --user $User --exec "$WorkingDirectory/${ExecStart}_bg" &> $LOGDIR/$NEWSERVNAME.log
-    testPid
-}
-
-
 . $shunit2 #include test suite
 
 exit
-
-#TODO rewrite
-
-test4shunit2_without_background(){
-    my_start
-}
-
-testPid(){
-    realpid=$(cat my.pid)
-    #cat $PIDFile
-    #echo $realpid
-    sspid=$(cat $PIDFile)
-    my_assert_equals "$sspid" "$realpid" "ss-pid $sspid $realpid"
-}
-
-testUser(){
-    my_assert_equals "$User" $(cat my.user) User
-}
-
-DtestDir(){
-    my_assert_equals "$WorkingDirectory" "$(cat my.dir)" "Dir"
-}
-
-testHome(){
-    my_assert_equals "/home/$User" "$(cat my.home)" "Home dir"
-    #[ "$1" = "$2" ] && echo "Тест $3 прошёл" || echo "Тест $3 не прошёл"
-}
-
-my_assert_equals(){
-    assertEquals "$3" "$1" "$2"
-}
-
-
 
