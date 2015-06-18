@@ -124,7 +124,7 @@ is_auto_created(){
 
 monit_install(){
     #TODO change $MYMONIT to $MONITPACKAGE
-    epmq --quiet $MYMONIT &> /dev/null || epmi -y $MYMONIT
+    epm assure $MYMONIT
     serv --quiet monit start #TODO check it and add depends on epm
     RETVAL="$?"
 }
@@ -282,6 +282,13 @@ my_exit_echo(){
 my_return_file(){
     RETVAL=1 
     my_return "The file ${1} exists"
+}
+
+on(){
+
+#TODO link $1 from 
+#lib/systemd/system
+#lite
 }
 
 my_exit_file(){
