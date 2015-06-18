@@ -1,9 +1,8 @@
 #!/bin/sh
 
+mkdir $1 || exit
 
-mkdir $1
-
-cd $1
+cd $1 || exit
 
 myuser="my.user"
 mypid="my.pid"
@@ -16,6 +15,8 @@ echo $(whoami) > $myuser
 echo $$ > $mypid
 echo $(pwd) > $mydir
 echo $HOME > $myhome
+id -u > my.id
 sleep 20
 
-#rm -f $myuser $mypid $mydir $myhome
+rm -rf $1
+# $myuser $mypid $mydir $myhome

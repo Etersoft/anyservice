@@ -4,7 +4,8 @@ PIDFile=$(pwd)/test.pid
 User="guest"
 WorkingDirectory=$(realpath .)
 ExecStart="test_process"
-LOGDIR=./
+echo $WorkingDirectory
+LOGDIR=$WorkingDirectory/
 NEWSERVNAME="test"
 
 #Install test suite: # wget http://shunit2.googlecode.com/files/shunit2-2.1.6.tgz && tar zxvf shunit2-2.1.6.tgz
@@ -15,17 +16,18 @@ my_start(){
 
     background_dir=$WorkingDirectory/test_${1}/
     #mkdir -p $background_dir
-    
 
     #TODO give start command arguments after -- #example: sleep -- 100
-    sudo /sbin/start-stop-daemon --start --pidfile $PIDFile $1 --make-pidfile -c $User --exec $WorkingDirectory/$ExecStart --startas "$WorkingDirectory/$ExecStart" -- $background_dir &> $LOGDIR/$NEWSERVNAME_$1.log
+    sudo /sbin/start-stop-daemon --start --pidfile $PIDFile $1 \
+	--make-pidfile -c $User --exec $WorkingDirectory/$ExecStart --startas "$WorkingDirectory/$ExecStart" -- $background_dir &> $LOGDIR/$NEWSERVNAME_$1.log
     echo "start-stop exit status $?" >> $LOGDIR/$NEWSERVNAME.log
-    cd $background_dir
+    
 }
 
 test4shunit2_with_background(){
     #sudo /sbin/start-stop-daemon --start --pidfile $PIDFile --background --make-pidfile --chuid $User --exec "$WorkingDirectory/$ExecStart" &> $LOGDIR/$NEWS
     my_start "--background"
+    cd $background_dir
 }
 
 testPid(){
@@ -40,7 +42,11 @@ testUser(){
     my_assert_equals "$User" $(cat my.user) User
 }
 
-testDir(){
+testID(){
+    my_assert_equals "$(id -u $User)" $(cat my.id) User
+}
+
+DtestDir(){
     my_assert_equals "$WorkingDirectory" "$(cat my.dir)" "Dir"
 }
 
@@ -60,6 +66,10 @@ _test_bg(){
 }
 
 
+. $shunit2 #include test suite
+
+exit
+
 #TODO rewrite
 
 test4shunit2_without_background(){
@@ -78,7 +88,7 @@ testUser(){
     my_assert_equals "$User" $(cat my.user) User
 }
 
-testDir(){
+DtestDir(){
     my_assert_equals "$WorkingDirectory" "$(cat my.dir)" "Dir"
 }
 
@@ -93,4 +103,3 @@ my_assert_equals(){
 
 
 
-. $shunit2 #include test suite
