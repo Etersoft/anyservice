@@ -144,6 +144,13 @@ serv_startd(){
 
     /sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile --user $User \
 	 -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
+
+    /sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile --user $User \
+	 -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
+
+    /sbin/start-stop-daemon --start --pidfile $PIDFile $1 \
+        --make-pidfile -c $User --exec $ExecStart \
+        --startas $SCRIPTNAME -- 1 prestartd $WorkingDirectory $ExecStart &> $LOGDIR/$NEWSERVNAME.log
     
     ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
 }
