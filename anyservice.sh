@@ -7,6 +7,7 @@ SCRIPTNAME="$(basename $0)"
 MYMONIT="monit"
 VERBOSE=false
 SERVDIR="/etc/systemd-lite/"
+SYSTEMDDIR="/lib/systemd/system"
 RUNDIR="/var/run/$SCRIPTNAME/"
 DEFAULTLOGDIR="/var/log/$SCRIPTNAME/"
 AUTOSTRING="#The file has been created automatically with $MYNAMEIS"
@@ -140,17 +141,17 @@ is_monit_installed(){
 serv_startd(){
     LOGDIR="$DEFAULTLOGDIR/$NEWSERVNAME/"
     mkdir -p $LOGDIR
+
     /sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile --user $User \
 	 -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
     
     ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
 }
 
-write_non_empty(){
-    if [ -n "$1" ] ; then
-        echo $1 > $2
-    fi
+prestartd_service(){
+    
 }
+
 
 serv_stopd(){
     if [ -s "$PIDFile" ] ; then
@@ -199,6 +200,16 @@ status_service(){
     my_return
 }
 
+on_service(){
+    ln -s $SYSTEMDDIR/"$1" $SERVDIR || my_exit "Can't enable $SYSTEMDDIR/$1"
+    start
+}
+
+off_service(){
+    mv $SERVDIR/"$1" $SERVDIR/"$1".off || my_exit "Can't disable $SERVDIR/$1"
+    remove_service
+}
+
 #TODO need refactor, rewrite
 my_getopts(){
     if ! [ -n "$1" ] ; then 
@@ -207,8 +218,17 @@ my_getopts(){
     fi
 
     case $1 in
+         on)
+	    on_service
+	    ;;
+         off)
+	    off_service
          start)
 	    start_service
+	    ;;
+	    ;;
+         prestartd)
+	    prestartd_service
 	    ;;
          stop)
 	    stop_service
@@ -263,6 +283,7 @@ list_service(){
 
     my_exit "List"
 }
+
 my_return(){
     $VERBOSE && echo "$1"
     return $RETVAL
@@ -278,17 +299,15 @@ my_exit_echo(){
     exit $RETVAL
 }
 
+write_non_empty(){
+    if [ -n "$1" ] ; then
+        echo $1 > $2
+    fi
+}
 
 my_return_file(){
     RETVAL=1 
     my_return "The file ${1} exists"
-}
-
-on(){
-
-#TODO link $1 from 
-#lib/systemd/system
-#lite
 }
 
 my_exit_file(){
@@ -297,8 +316,9 @@ my_exit_file(){
 }
 
 help(){
-    echo "$SCRIPTNAME <service file name> [start|stop|restart|status|summary|remove|list]"
+    echo "$SCRIPTNAME <service file name> [start|stop|restart|status|summary|remove|list|on|off]"
     echo "example: put service file to $SERVDIR/odoo.service and run # $SCRIPTNAME odoo"
+    echo "example: put service file to $SYSTEMDDIR/odoo.service and run # $SCRIPTNAME odoo on"
     echo "example: $SCRIPTNAME <list|--help> #List of services or help"
     my_exit
 }
