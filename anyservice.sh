@@ -1,21 +1,22 @@
 #!/bin/bash
 
+MYMONIT="monit"
+SERVDIR="/etc/systemd-lite"
+SYSTEMDDIR="/lib/systemd/system"
+VERBOSE=false
+
 MYSCRIPTDIR="$(pwd)"
 RETVAL=1
 MYNAMEIS="$0"
 SCRIPTNAME="$(basename $0)"
-MYMONIT="monit"
-VERBOSE=false
-SERVDIR="/etc/systemd-lite/"
-SYSTEMDDIR="/lib/systemd/system"
+FULLSCRIPTPATH=$MYSCRIPTDIR/$SCRIPTNAME
+
 RUNDIR="/var/run/$SCRIPTNAME/"
 DEFAULTLOGDIR="/var/log/$SCRIPTNAME/"
-AUTOSTRING="#The file has been created automatically with $MYNAMEIS"
+AUTOSTRING="#The file has been created automatically with $FULLSCRIPTPATH"
 
 init_serv(){
-    mkdir -p $SERVDIR
-    mkdir -p $DEFAULTLOGDIR
-    mkdir -p $RUNDIR
+    mkdir -vp $SERVDIR $DEFAULTLOGDIR $RUNDIR &> /dev/null
 
     SERVNAME="$1"
     SERVFILE="$SERVDIR/${SERVNAME}.service"
@@ -90,8 +91,8 @@ if need_update_file "$SERVFILE" "$MONITFILE" ; then
 cat <<EOF >"$MONITFILE"
 check process $NEWSERVNAME with pidfile $PIDFile
         group daemons
-        start program = "$MYNAMEIS $NEWSERVNAME startd"
-        stop  program = "$MYNAMEIS $NEWSERVNAME stopd"
+        start program = "$FULLSCRIPTPATH $NEWSERVNAME startd"
+        stop  program = "$FULLSCRIPTPATH $NEWSERVNAME stopd"
         $MyRestart
 
 $AUTOSTRING
@@ -135,6 +136,10 @@ is_monit_installed(){
     monit_install || my_exit "Monit not installed."
 }
 
+get_home_dir(){ #Get home dir path by User name
+    getent passwd "$1" | cut -d: -f6
+}
+
 #=============== stop and start section ==========================
 # *d command really start serv, without d run command over monit
 
@@ -142,23 +147,24 @@ serv_startd(){
     LOGDIR="$DEFAULTLOGDIR/$NEWSERVNAME/"
     mkdir -p $LOGDIR
 
-    /sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile --user $User \
-	 -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
+    #TODO check $FULLSCRIPTPATH 
 
-    /sbin/start-stop-daemon --start --exec /bin/su --pidfile $PIDFile --make-pidfile --user $User \
-	 -- -s /bin/sh -l $User -c "cd $WorkingDirectory ; $ExecStart &" &> $LOGDIR/$NEWSERVNAME.log
-
-    /sbin/start-stop-daemon --start --pidfile $PIDFile $1 \
-        --make-pidfile -c $User --exec $ExecStart \
-        --startas $SCRIPTNAME -- 1 prestartd $WorkingDirectory $ExecStart &> $LOGDIR/$NEWSERVNAME.log
+    /sbin/start-stop-daemon --start --pidfile $PIDFile --background \
+        --make-pidfile -c $User --exec $FULLSCRIPTPATH --startas $FULLSCRIPTPATH \
+        -- 1 prestartd $WorkingDirectory $ExecStart &> $LOGDIR/$NEWSERVNAME.log
     
-    ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
+    #ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
 }
 
-prestartd_service(){
-    
-}
+prestartd_service(){ #Change dirto $1 and really run programm from $2
+    #umask 0002
+    mkdir -p $1 || my_exit "Can't create dir $1"
+    cd $1 || my_exit "Can't change dir $1"
+    #export HOME=$2
+    shift 2
 
+    exec $2 "$@"
+}
 
 serv_stopd(){
     if [ -s "$PIDFile" ] ; then
@@ -225,17 +231,17 @@ my_getopts(){
     fi
 
     case $1 in
+         prestartd)
+	    prestartd_service
+	    ;;
          on)
 	    on_service
 	    ;;
          off)
 	    off_service
+	    ;;
          start)
 	    start_service
-	    ;;
-	    ;;
-         prestartd)
-	    prestartd_service
 	    ;;
          stop)
 	    stop_service
@@ -324,9 +330,12 @@ my_exit_file(){
 
 help(){
     echo "$SCRIPTNAME <service file name> [start|stop|restart|status|summary|remove|list|on|off]"
-    echo "example: put service file to $SERVDIR/odoo.service and run # $SCRIPTNAME odoo"
-    echo "example: put service file to $SYSTEMDDIR/odoo.service and run # $SCRIPTNAME odoo on"
+    echo "Create service from programm and control their procces"
+    echo ""
+    echo "example: put service file to ${SERVDIR}/example.service and run # $SCRIPTNAME example"
+    echo "example: put service file to $SYSTEMDDIR/example.service and run # $SCRIPTNAME example on"
     echo "example: $SCRIPTNAME <list|--help> #List of services or help"
+    echo ""
     my_exit
 }
 

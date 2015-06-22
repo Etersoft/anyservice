@@ -1,11 +1,8 @@
 #!/bin/sh
 
 umask 0002
-
 mkdir -p $1 || exit
-
 cd $1 || exit
-
 export HOME=$2
 
 shift 2
