@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 MYMONIT="monit"
 MONITDIR="/etc/monit.d/"
@@ -40,6 +40,8 @@ read_config(){
     #TODO check it. Test remove file, run function
     exist_file $SERVFILE || my_exit_echo "Config file $SERVFILE has not been found"
 
+    #TODO check that last file line is empty or add line !!!
+
     while IFS='=' read varname var ; do
         case "$varname" in
 	    User) User="$var" ;;
@@ -56,7 +58,9 @@ read_config(){
 
 check_conf(){
     if [ -z "$PIDFile" ] ; then
-        PIDFile=$RUNDIR"${SERVNAME}.pid"
+	#TODO check permission for $User
+        #PIDFile=$RUNDIR"${SERVNAME}.pid"
+        PIDFile=/tmp/"${SERVNAME}.pid"
     fi
 
     #TODO it needed or restart monit always?
@@ -67,15 +71,18 @@ check_conf(){
   	MyRestart=""
     fi
 
-    if [ ! -d $WorkingDirectory ] ; then
+    if [ -z "$WorkingDirectory" ] || [ ! -d "$WorkingDirectory" ] ; then
         RETVAL=1
-        my_return "Directory $WorkingDirectory non exist"
+        #TODO chane dir
+        my_echo "Directory $WorkingDirectory non exist use /tmp"
+        WorkingDirectory="/tmp/"
     fi
 
-#TODO check whis
-#	if [ -n "$User" ] && [ getent passwd "$User" ] ; then
-#		my_return "User non exist: $User "
-#	fi
+#TODO check whis && [ getent passwd "$User" ]
+    if [ -z "$User" ] ; then
+    	my_return "User not passed, uses root"
+    	User=root
+    fi
 
 }
 
@@ -130,9 +137,9 @@ prestartd_service(){ #Change dir to $1 and really run programm from $2
     mkdir -p $1 || my_exit "Can't create dir $1"
     cd $1 || my_exit "Can't change dir $1"
     #export HOME=$2
-    shift 2
+    shift
 
-    exec $2 "$@"
+    exec "$@"
 }
 
 serv_startd(){
@@ -142,10 +149,12 @@ serv_startd(){
     full_init
 
     #TODO check $FULLSCRIPTPATH 
+    
+    echo "-- $NEWSERVNAME prestartd $WorkingDirectory $ExecStart &> $LOGDIR/$NEWSERVNAME.log"
 
     /sbin/start-stop-daemon --start --pidfile $PIDFile --background \
         --make-pidfile -c $User --exec $FULLSCRIPTPATH --startas $FULLSCRIPTPATH \
-        -- 1 prestartd $WorkingDirectory $ExecStart &> $LOGDIR/$NEWSERVNAME.log
+        -- $NEWSERVNAME prestartd $WorkingDirectory $ExecStart &> $LOGDIR/$NEWSERVNAME.log
     
     #ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
 }
@@ -162,8 +171,8 @@ serv_stopd(){
 }
 
 start_service(){
-    monit_wrap monitor
-    sleep 2
+#    monit_wrap monitor
+#    sleep 2
     monit_wrap start
 }
 
@@ -219,14 +228,15 @@ monit_wrap(){
 monit_assure(){
     exist_monit_conf || full_init
     monit_install || my_exit "Monit not installed."
-    serv --quiet monit start
-    serv --quiet monit reload
+    #serv --quiet monit start
+    #serv --quiet monit reload
 }
 
 monit_install(){
     #TODO change $MYMONIT to $MONITPACKAGE
     epm assure $MYMONIT
-    serv --quiet monit start #TODO check it and add depends on epm
+    #TODO start only after install
+    #serv --quiet monit start #TODO check it and add depends on epm
     RETVAL="$?"
 }
 
@@ -253,7 +263,8 @@ my_getopts(){
 
     case $1 in
          prestartd)
-	    prestartd_service
+            shift
+	    prestartd_service $@
 	    ;;
          on)
 	    on_service
@@ -324,6 +335,10 @@ my_return(){
     return $RETVAL
 }
 
+my_echo(){
+    $VERBOSE && echo "$1"
+}
+
 my_exit(){
     $VERBOSE && echo "$1"
     exit $RETVAL
@@ -363,7 +378,6 @@ help(){
 
 full_init(){
     read_config
-#    monit_assure
     check_conf || my_exit "Dirеctory $WorkingDirectory does not exist."
     create_monit || my_return_file $MONITFILE
 }
@@ -371,7 +385,8 @@ full_init(){
 run(){
     #TODO rewrite for start from my_getopts $2
     init_serv $1
-    my_getopts $2
+    shift
+    my_getopts $@
 }
 
-run $1 $2
+run $@
