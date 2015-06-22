@@ -1,8 +1,12 @@
 #!/bin/bash
 
 MYMONIT="monit"
+MONITDIR="/etc/monit.d/"
 SERVDIR="/etc/systemd-lite"
 SYSTEMDDIR="/lib/systemd/system"
+RUNDIR="/var/run/$SCRIPTNAME/"
+DEFAULTLOGDIR="/var/log/$SCRIPTNAME/"
+
 VERBOSE=false
 
 MYSCRIPTDIR="$(pwd)"
@@ -10,9 +14,6 @@ RETVAL=1
 MYNAMEIS="$0"
 SCRIPTNAME="$(basename $0)"
 FULLSCRIPTPATH=$MYSCRIPTDIR/$SCRIPTNAME
-
-RUNDIR="/var/run/$SCRIPTNAME/"
-DEFAULTLOGDIR="/var/log/$SCRIPTNAME/"
 AUTOSTRING="#The file has been created automatically with $FULLSCRIPTPATH"
 
 init_serv(){
@@ -21,27 +22,24 @@ init_serv(){
     SERVNAME="$1"
     SERVFILE="$SERVDIR/${SERVNAME}.service"
     NEWSERVNAME="${SERVNAME}"
+    MONITFILE="$MONITDIR/$NEWSERVNAME"
 
+    #TODO remove hack for some operation 
     if [ list = "$SERVNAME" ] ; then
 	list_service
     fi
 
-    if [ --help = "$SERVNAME" ] || [ -h = "$SERVNAME" ] || [ help = "$SERVNAME" ]; then
+    if [ --help = "$SERVNAME" ] || [ -h = "$SERVNAME" ] || [ help = "$SERVNAME" ] || [ -z "$SERVNAME" ]; then
 	help
-    fi
-
-    if [ -z "$SERVNAME" ] ; then
-	help
-    fi
-
-    if ! [ -e "$SERVFILE" ] ; then
-        RETVAL=1
-	my_exit_echo "Config file $SERVFILE has not been found"
     fi
 
 }
 
 read_config(){
+
+    #TODO check it. Test remove file, run function
+    exist_file $SERVFILE || my_exit_echo "Config file $SERVFILE has not been found"
+
     while IFS='=' read varname var ; do
         case "$varname" in
 	    User) User="$var" ;;
@@ -49,15 +47,14 @@ read_config(){
 	    ExecStart) ExecStart="$var" ;;
 	    Restart) Restart="$var" ;;
 	    PIDFile) PIDFile="$var" ;;
-	    *)     $VERBOSE && echo "Found an unsupported systemd option: $varname $var" ;;
+	    *)     my_return "Found an unsupported systemd option: $varname $var" ;;
 	esac
-    done < $SERVFILE
+    done < "$SERVFILE"
     #TODO grep -v ^# | grep =
     #No need this, because no match in case for unsuported var
 }
 
 check_conf(){
-
     if [ -z "$PIDFile" ] ; then
         PIDFile=$RUNDIR"${SERVNAME}.pid"
     fi
@@ -72,7 +69,7 @@ check_conf(){
 
     if [ ! -d $WorkingDirectory ] ; then
         RETVAL=1
-        my_return
+        my_return "Directory $WorkingDirectory non exist"
     fi
 
 #TODO check whis
@@ -83,8 +80,6 @@ check_conf(){
 }
 
 create_monit(){
-MONITDIR="/etc/monit.d/"
-MONITFILE="$MONITDIR/$NEWSERVNAME"
 mkdir -p $MONITDIR
 
 if need_update_file "$SERVFILE" "$MONITFILE" ; then
@@ -98,9 +93,8 @@ check process $NEWSERVNAME with pidfile $PIDFile
 $AUTOSTRING
 EOF
 
-serv --quiet monit start
-serv --quiet monit reload
-my_return "White while monit is restarting"
+monit_assure
+my_return "Monit is restarting"
 else
 RETVAL=1
 my_return
@@ -124,18 +118,6 @@ is_auto_created(){
     [ "`tail -n 1 $1`" = "$AUTOSTRING" ] 
 }
 
-monit_install(){
-    #TODO change $MYMONIT to $MONITPACKAGE
-    epm assure $MYMONIT
-    serv --quiet monit start #TODO check it and add depends on epm
-    RETVAL="$?"
-}
-
-is_monit_installed(){
-    epmq --quiet $MYMONIT &> /dev/null || my_return "Monit not installed. Trying to install..." 
-    monit_install || my_exit "Monit not installed."
-}
-
 get_home_dir(){ #Get home dir path by User name
     getent passwd "$1" | cut -d: -f6
 }
@@ -143,9 +125,21 @@ get_home_dir(){ #Get home dir path by User name
 #=============== stop and start section ==========================
 # *d command really start serv, without d run command over monit
 
+prestartd_service(){ #Change dir to $1 and really run programm from $2
+    #umask 0002
+    mkdir -p $1 || my_exit "Can't create dir $1"
+    cd $1 || my_exit "Can't change dir $1"
+    #export HOME=$2
+    shift 2
+
+    exec $2 "$@"
+}
+
 serv_startd(){
     LOGDIR="$DEFAULTLOGDIR/$NEWSERVNAME/"
     mkdir -p $LOGDIR
+    
+    full_init
 
     #TODO check $FULLSCRIPTPATH 
 
@@ -156,17 +150,9 @@ serv_startd(){
     #ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
 }
 
-prestartd_service(){ #Change dirto $1 and really run programm from $2
-    #umask 0002
-    mkdir -p $1 || my_exit "Can't create dir $1"
-    cd $1 || my_exit "Can't change dir $1"
-    #export HOME=$2
-    shift 2
-
-    exec $2 "$@"
-}
-
 serv_stopd(){
+    read_config
+    
     if [ -s "$PIDFile" ] ; then
         /sbin/start-stop-daemon --stop --pidfile $PIDFile
     else
@@ -176,29 +162,22 @@ serv_stopd(){
 }
 
 start_service(){
-    echo "$MYMONIT start $NEWSERVNAME"
-    $MYMONIT monitor $NEWSERVNAME
+    monit_wrap monitor
     sleep 2
-    $MYMONIT start $NEWSERVNAME
-    RETVAL="$?"
-    my_return
+    monit_wrap start
 }
 
 stop_service(){
-    echo "$MYMONIT stop $NEWSERVNAME"
-    $MYMONIT stop $NEWSERVNAME
-    RETVAL="$?"
-    my_return
+    monit_wrap stop
 }
 
 restart_service(){
-    echo "$MYMONIT restart $NEWSERVNAME"
-    $MYMONIT restart $NEWSERVNAME
-    RETVAL="$?"
-    my_return
+    monit_wrap restart
 }
 
 summary_service(){
+    monit_assure
+
     echo "$MYMONIT summary $NEWSERVNAME"
     $MYMONIT summary | grep $NEWSERVNAME
     RETVAL="$?"
@@ -206,6 +185,8 @@ summary_service(){
 }
 
 status_service(){
+    monit_assure
+
     echo "$MYMONIT status $NEWSERVNAME"
     #TODO check
     $MYMONIT status | grep -A20 $NEWSERVNAME|grep -B20 'data collected' -m1
@@ -214,13 +195,53 @@ status_service(){
 }
 
 on_service(){
-    ln -s $SYSTEMDDIR/"$1" $SERVDIR || my_exit "Can't enable $SYSTEMDDIR/$1"
-    start
+    #TODO check that non exist .off file
+    #TODO check that file already exist
+    ln -s "$SYSTEMDDIR/${SERVNAME}.service" $SERVDIR || my_exit "Can't enable $SYSTEMDDIR/$1"
+    full_init
+    start_service
 }
 
 off_service(){
-    mv $SERVDIR/"$1" $SERVDIR/"$1".off || my_exit "Can't disable $SERVDIR/$1"
+    mv $SERVFILE ${SERVFILE}.off || my_exit "Can't disable $SERVFILE"
     remove_service
+}
+
+monit_wrap(){
+    monit_assure
+
+    echo "$MYMONIT $1 $NEWSERVNAME"
+    $MYMONIT $1 $NEWSERVNAME
+    RETVAL="$?"
+    my_return    
+}
+
+monit_assure(){
+    exist_monit_conf || full_init
+    monit_install || my_exit "Monit not installed."
+    serv --quiet monit start
+    serv --quiet monit reload
+}
+
+monit_install(){
+    #TODO change $MYMONIT to $MONITPACKAGE
+    epm assure $MYMONIT
+    serv --quiet monit start #TODO check it and add depends on epm
+    RETVAL="$?"
+}
+
+exist_file(){
+    if ! [ -e "$1" ] ; then
+        RETVAL=1
+        my_return "Config file $1 has not been found"
+    else
+	RETVAL=0
+        my_return "Config file $1 has been found"
+    fi
+}
+
+exist_monit_conf(){
+    exist_file $MONITFILE    
 }
 
 #TODO need refactor, rewrite
@@ -271,6 +292,7 @@ my_getopts(){
             help
             ;;
     esac
+    
 }
 
 remove_service(){
@@ -339,14 +361,16 @@ help(){
     my_exit
 }
 
-run(){
-    #TODO rewrite for start from my_getopts $2
-    init_serv $1 || help
+full_init(){
     read_config
-    is_monit_installed
-    #monit_install || my_exit "Monit $WorkingDirectory does not exist."
+#    monit_assure
     check_conf || my_exit "Dirеctory $WorkingDirectory does not exist."
     create_monit || my_return_file $MONITFILE
+}
+
+run(){
+    #TODO rewrite for start from my_getopts $2
+    init_serv $1
     my_getopts $2
 }
 
