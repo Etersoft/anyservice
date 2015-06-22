@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 MYMONIT="monit"
 MONITDIR="/etc/monit.d/"
@@ -9,7 +9,8 @@ DEFAULTLOGDIR="/var/log/$SCRIPTNAME/"
 
 VERBOSE=false
 
-MYSCRIPTDIR="$(pwd)"
+MYSCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+#"$(pwd)" #"
 RETVAL=1
 MYNAMEIS="$0"
 SCRIPTNAME="$(basename $0)"
@@ -108,6 +109,7 @@ my_return
 fi
 }
 
+#TODO check this
 need_update_file(){ 
     #return 0 if file non exist or $2 older that $1
     #servfile_non_exist
@@ -161,6 +163,7 @@ serv_startd(){
 
 serv_stopd(){
     read_config
+    check_conf
     
     if [ -s "$PIDFile" ] ; then
         /sbin/start-stop-daemon --stop --pidfile $PIDFile
