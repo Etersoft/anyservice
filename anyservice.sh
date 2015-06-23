@@ -60,8 +60,8 @@ read_config(){
 check_conf(){
     if [ -z "$PIDFile" ] ; then
 	#TODO check permission for $User
-        #PIDFile=$RUNDIR"${SERVNAME}.pid"
-        PIDFile=/tmp/"${SERVNAME}.pid"
+        PIDFile=$RUNDIR"${SERVNAME}.pid"
+        #PIDFile=/tmp/"${SERVNAME}.pid"
     fi
 
     #TODO it needed or restart monit always?
@@ -150,9 +150,8 @@ serv_startd(){
     
     full_init
 
-    #TODO check $FULLSCRIPTPATH 
-    
-    echo "-- $NEWSERVNAME prestartd $WorkingDirectory $ExecStart &> $LOGDIR/$NEWSERVNAME.log"
+    touch $PIDFile
+    chmod a+rw $PIDFile
 
     /sbin/start-stop-daemon --start --pidfile $PIDFile --background \
         --make-pidfile -c $User --exec $FULLSCRIPTPATH --startas $FULLSCRIPTPATH \
