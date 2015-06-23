@@ -151,7 +151,7 @@ serv_startd(){
     full_init
 
     touch $PIDFile
-    chmod a+rw $PIDFile
+    chown $User $PIDFile
 
     /sbin/start-stop-daemon --start --pidfile $PIDFile --background \
         --make-pidfile -c $User --exec $FULLSCRIPTPATH --startas $FULLSCRIPTPATH \
