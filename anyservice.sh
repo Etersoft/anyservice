@@ -259,6 +259,7 @@ exist_monit_conf(){
 #TODO need refactor, rewrite
 my_getopts(){
     if ! [ -n "$1" ] ; then 
+	help
 	return 1
         #my_return
     fi
@@ -371,7 +372,7 @@ help(){
     echo "$SCRIPTNAME <service file name> [start|stop|restart|status|summary|remove|list|on|off]"
     echo "Create service from programm and control their procces"
     echo ""
-    echo "example: put service file to ${SERVDIR}/example.service and run # $SCRIPTNAME example"
+    echo "example: put service file to ${SERVDIR}/example.service and run # $SCRIPTNAME example start"
     echo "example: put service file to $SYSTEMDDIR/example.service and run # $SCRIPTNAME example on"
     echo "example: $SCRIPTNAME <list|--help> #List of services or help"
     echo ""
