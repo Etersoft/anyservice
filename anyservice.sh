@@ -175,6 +175,7 @@ serv_stopd(){
 start_service(){
 #    monit_wrap monitor
 #    sleep 2
+    $MYMONIT reload
     monit_wrap start
 }
 
@@ -230,6 +231,7 @@ monit_wrap(){
 monit_assure(){
     exist_monit_conf || full_init
     monit_install || my_exit "Monit not installed."
+    $MYMONIT reload
     #serv --quiet monit start
     #serv --quiet monit reload
 }
