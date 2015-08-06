@@ -232,6 +232,7 @@ monit_assure(){
     exist_monit_conf || full_init
     monit_install || my_exit "Monit not installed."
     $MYMONIT reload
+    sleep 2
     #serv --quiet monit start
     #serv --quiet monit reload
 }
