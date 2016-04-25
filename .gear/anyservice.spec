@@ -41,7 +41,7 @@ cp -a * %buildroot/%anyservicedir/
 
 %changelog
 * Mon Apr 25 2016 Danil Mikhailov <danil@altlinux.org> 0.1-alt2
-- 
+- building version
 
 * Mon Apr 25 2016 Danil Mikhailov <danil@altlinux.org> 0.1-alt1
 - initial package version
