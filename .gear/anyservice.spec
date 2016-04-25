@@ -18,7 +18,7 @@ BuildPreReq: rpm-build-compat
 %define anyservicedir /var/lib/anyservice
 
 %description
-Anyservice скрипт позволяющий превратить программу в сервис.
+Anyservice - scripts for making systemd like service from any programs
 
 %prep
 %setup
