@@ -29,6 +29,8 @@ Anyservice скрипт позволяющий превратить програ
 mkdir -p %buildroot/%anyservicedir/
 mkdir -p %buildroot/%_bindir/
 
+cp -a * %buildroot/%anyservicedir/
+
 %check
 #check that port listening
 
