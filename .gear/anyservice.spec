@@ -2,7 +2,7 @@ Name: anyservice
 Version: 0.1
 Release: alt2
 
-Summary: Anyservice скрипт позволяющий превратить программу в сервис.
+Summary: Anyservice - scripts for making systemd like service from any programs
 
 License: Mit
 Group: System
