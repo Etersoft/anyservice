@@ -1,6 +1,6 @@
 Name: anyservice
 Version: 0.1
-Release: alt1
+Release: alt2
 
 Summary: Anyservice скрипт позволяющий превратить программу в сервис.
 
@@ -40,6 +40,9 @@ cp -a * %buildroot/%anyservicedir/
 %anyservicedir/*
 
 %changelog
+* Mon Apr 25 2016 Danil Mikhailov <danil@altlinux.org> 0.1-alt2
+- 
+
 * Mon Apr 25 2016 Danil Mikhailov <danil@altlinux.org> 0.1-alt1
 - initial package version
 
