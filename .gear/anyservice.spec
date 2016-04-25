@@ -5,7 +5,7 @@ Release: alt2
 Summary: Anyservice - scripts for making systemd like service from any programs
 
 License: Mit
-Group: System
+Group: System/Base
 Url: http://wiki.etersoft.ru/Anyservice
 
 Source: %name-%version.tar
