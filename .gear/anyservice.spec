@@ -1,6 +1,6 @@
 Name: anyservice
 Version: 0.1
-Release: alt2
+Release: alt3
 
 Summary: Anyservice - scripts for making systemd like service from any programs
 
@@ -39,6 +39,9 @@ cp %name.sh %buildroot/%_bindir/%name
 %attr(755,root,root) %_bindir/%name
 
 %changelog
+* Thu May 12 2016 Danil Mikhailov <danil@altlinux.org> 0.1-alt3
+- added example, put into right folder
+
 * Mon Apr 25 2016 Danil Mikhailov <danil@altlinux.org> 0.1-alt2
 - building version
 
