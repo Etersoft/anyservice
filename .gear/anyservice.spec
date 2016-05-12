@@ -15,8 +15,6 @@ Packager: Danil Mikhailov <danil@altlinux.org>
 BuildArch: noarch
 BuildPreReq: rpm-build-compat
 
-%define anyservicedir /var/lib/anyservice
-
 %description
 Anyservice - scripts for making systemd like service from any programs
 
@@ -26,18 +24,19 @@ Anyservice - scripts for making systemd like service from any programs
 %build
 
 %install
-mkdir -p %buildroot/%anyservicedir/
 mkdir -p %buildroot/%_bindir/
+mkdir -p %buildroot/etc/systemd-lite/
 
-cp -a * %buildroot/%anyservicedir/
+cp example.service %buildroot/etc/systemd-lite/
+cp %name.sh %buildroot/%_bindir/%name
 
 %check
 #check that port listening
 
 %pre
 %files
-%attr(755,root,root) %dir %anyservicedir/
-%anyservicedir/*
+%attr(755,root,root) %dir /etc/systemd-lite/*
+%attr(755,root,root) %_bindir/%name
 
 %changelog
 * Mon Apr 25 2016 Danil Mikhailov <danil@altlinux.org> 0.1-alt2
