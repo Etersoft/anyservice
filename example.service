@@ -6,7 +6,6 @@ Type=simple
 User=root
 WorkingDirectory=/tmp/
 ExecStart=example
-PIDFile=/var/run/example.pid
 Restart=always
 
 [Install]

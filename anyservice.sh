@@ -4,16 +4,17 @@ MYMONIT="monit"
 MONITDIR="/etc/monit.d/"
 SERVDIR="/etc/systemd-lite"
 SYSTEMDDIR="/lib/systemd/system"
+SCRIPTNAME="$(basename $0)"
 RUNDIR="/var/run/$SCRIPTNAME/"
 DEFAULTLOGDIR="/var/log/$SCRIPTNAME/"
 
 VERBOSE=false
 
-MYSCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-#"$(pwd)" #"
+MYSCRIPTDIR=$(dirname "$0")
+[ "$MYSCRIPTDIR" = "." ] && MYSCRIPTDIR="$(pwd)"
+
 RETVAL=1
 MYNAMEIS="$0"
-SCRIPTNAME="$(basename $0)"
 FULLSCRIPTPATH=$MYSCRIPTDIR/$SCRIPTNAME
 AUTOSTRING="#The file has been created automatically with $FULLSCRIPTPATH"
 
@@ -33,7 +34,6 @@ init_serv(){
     if [ --help = "$SERVNAME" ] || [ -h = "$SERVNAME" ] || [ help = "$SERVNAME" ] || [ -z "$SERVNAME" ]; then
 	help
     fi
-
 }
 
 read_config(){
