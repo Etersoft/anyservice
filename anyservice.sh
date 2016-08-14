@@ -213,8 +213,13 @@ remove_service(){
 on_service(){
     #TODO check that non exist .off file
     #TODO check that file already exist
-    ln -s "$SYSTEMDDIR/${SERVNAME}.service" $SERVDIR || my_exit "Can't enable $SYSTEMDDIR/$1"
-    full_init
+    if [ ! -e "$SERVFILE" ] ; then
+        if [ -e ${SERVFILE}.off ] ; then
+            ln -s "$SYSTEMDDIR/${SERVNAME}.service" $SERVFILE || my_exit "Can't enable $SYSTEMDDIR/$1"
+        else
+            mv -v ${SERVFILE}.off ${SERVFILE}
+        fi
+    fi
     start_service
 }
 
