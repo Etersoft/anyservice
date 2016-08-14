@@ -147,10 +147,28 @@ serv_startd(){
     touch $PIDFile
     chown $User $PIDFile
 
+    # Expand all variables
+    if [ -n "$EnvironmentFile" ] ; then
+        # execute something like /etc/sysconfig/service
+        if echo "$EnvironmentFile" | grep -q "^-" ; then
+            EnvironmentFile=$(echo "$EnvironmentFile" | sed -e "s|^-||")
+            # ignore missing file
+            [ -s "$EnvironmentFile" ] && . "$EnvironmentFile"
+        else
+            . "$EnvironmentFile"
+        fi
+    fi
+    # TODO: eval only last line
+    [ -s "$Environment" ] && eval "$Environment"
+
+    # HACK: due strange problem with vars evaluation
+    local EXECSTART=$(eval echo "$ExecStart")
+
+    # run via ourself script as wrapper
     /sbin/start-stop-daemon --start --pidfile $PIDFile --background \
         --make-pidfile -c $User --exec $FULLSCRIPTPATH --startas $FULLSCRIPTPATH \
-        -- $NEWSERVNAME prestartd $WorkingDirectory $ExecStart &> $LOGDIR/$NEWSERVNAME.log
-    
+        -- $NEWSERVNAME prestartd $WorkingDirectory $EXECSTART 2>&1 | tee -a $LOGDIR/$NEWSERVNAME.log
+
     #ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
 }
 
