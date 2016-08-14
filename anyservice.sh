@@ -1,41 +1,26 @@
 #!/bin/bash
-
+MYNAMEIS="anyservice"
 MYMONIT="monit"
 MONITDIR="/etc/monit.d/"
 SERVDIR="/etc/systemd-lite"
 SYSTEMDDIR="/lib/systemd/system"
 SCRIPTNAME="$(basename $0)"
-RUNDIR="/var/run/$SCRIPTNAME/"
-DEFAULTLOGDIR="/var/log/$SCRIPTNAME/"
+RUNDIR="/var/run/$MYNAMEIS/"
+DEFAULTLOGDIR="/var/log/$MYNAMEIS/"
 
+# TODO: allow change it
 VERBOSE=false
 
 MYSCRIPTDIR=$(dirname "$0")
 [ "$MYSCRIPTDIR" = "." ] && MYSCRIPTDIR="$(pwd)"
 
+# FIXME: drop it
 RETVAL=1
-MYNAMEIS="$0"
+
 FULLSCRIPTPATH=$MYSCRIPTDIR/$SCRIPTNAME
 AUTOSTRING="#The file has been created automatically with $FULLSCRIPTPATH"
 
-init_serv(){
-    mkdir -vp $SERVDIR $DEFAULTLOGDIR $RUNDIR &> /dev/null
-
-    SERVNAME="$1"
-    SERVFILE="$SERVDIR/${SERVNAME}.service"
-    NEWSERVNAME="${SERVNAME}"
-    MONITFILE="$MONITDIR/$NEWSERVNAME"
-
-    #TODO remove hack for some operation 
-    if [ list = "$SERVNAME" ] ; then
-	list_service
-    fi
-
-    if [ --help = "$SERVNAME" ] || [ -h = "$SERVNAME" ] || [ help = "$SERVNAME" ] || [ -z "$SERVNAME" ]; then
-	help
-    fi
-}
-
+# Read params from .service file
 read_config(){
 
     #TODO check it. Test remove file, run function
@@ -47,6 +32,8 @@ read_config(){
         case "$varname" in
 	    User) User="$var" ;;
 	    WorkingDirectory) WorkingDirectory="$var" ;;
+	    EnvironmentFile) EnvironmentFile="$var" ;;
+	    Environment) Environment="$var" ;;
 	    ExecStart) ExecStart="$var" ;;
 	    Restart) Restart="$var" ;;
 	    PIDFile) PIDFile="$var" ;;
@@ -57,10 +44,11 @@ read_config(){
     #No need this, because no match in case for unsuported var
 }
 
+# Improve params
 check_conf(){
     if [ -z "$PIDFile" ] ; then
 	#TODO check permission for $User
-        PIDFile=$RUNDIR"${SERVNAME}.pid"
+        PIDFile=$RUNDIR/"${SERVNAME}.pid"
         #PIDFile=/tmp/"${SERVNAME}.pid"
     fi
 
@@ -75,8 +63,8 @@ check_conf(){
     if [ -z "$WorkingDirectory" ] || [ ! -d "$WorkingDirectory" ] ; then
         RETVAL=1
         #TODO chane dir
-        my_echo "Directory $WorkingDirectory non exist use /tmp"
-        WorkingDirectory="/tmp/"
+        WorkingDirectory="/tmp"
+        my_echo "Directory $WorkingDirectory does not exist. Using $WorkingDirectory"
     fi
 
 #TODO check whis && [ getent passwd "$User" ]
@@ -84,32 +72,15 @@ check_conf(){
     	my_return "User not passed, uses root"
     	User=root
     fi
-
 }
 
-create_monit(){
-mkdir -p $MONITDIR
-
-if need_update_file "$SERVFILE" "$MONITFILE" ; then
-cat <<EOF >"$MONITFILE"
-check process $NEWSERVNAME with pidfile $PIDFile
-        group daemons
-        start program = "$FULLSCRIPTPATH $NEWSERVNAME startd"
-        stop  program = "$FULLSCRIPTPATH $NEWSERVNAME stopd"
-        $MyRestart
-
-$AUTOSTRING
-EOF
-
-monit_assure
-my_return "Monit is restarting"
-else
-RETVAL=1
-my_return
-fi
+read_service_info()
+{
+    read_config
+    check_conf
 }
 
-#TODO check this
+# TODO check this
 need_update_file(){ 
     #return 0 if file non exist or $2 older that $1
     #servfile_non_exist
@@ -123,8 +94,31 @@ need_update_file(){
     fi
 }
 
+create_monit(){
+monit_assure
+if need_update_file "$SERVFILE" "$MONITFILE" ; then
+echo "Create $MONITFILE ..."
+cat <<EOF >"$MONITFILE"
+check process $NEWSERVNAME with pidfile $PIDFile
+        group daemons
+        start program = "$FULLSCRIPTPATH $NEWSERVNAME startd"
+        stop  program = "$FULLSCRIPTPATH $NEWSERVNAME stopd"
+        $MyRestart
+
+$AUTOSTRING
+EOF
+monit_reload
+my_return "Monit is restarting"
+else
+RETVAL=1
+my_return
+fi
+}
+
+
+# FIXME: это пишется в начале файла, а не в конце
 is_auto_created(){
-    [ "`tail -n 1 $1`" = "$AUTOSTRING" ] 
+    [ "`tail -n 1 $1`" = "$AUTOSTRING" ]
 }
 
 get_home_dir(){ #Get home dir path by User name
@@ -147,8 +141,8 @@ prestartd_service(){ #Change dir to $1 and really run programm from $2
 serv_startd(){
     LOGDIR="$DEFAULTLOGDIR/$NEWSERVNAME/"
     mkdir -p $LOGDIR
-    
-    full_init
+
+    read_service_info
 
     touch $PIDFile
     chown $User $PIDFile
@@ -161,9 +155,8 @@ serv_startd(){
 }
 
 serv_stopd(){
-    read_config
-    check_conf
-    
+    read_service_info
+
     if [ -s "$PIDFile" ] ; then
         /sbin/start-stop-daemon --stop --pidfile $PIDFile
     else
@@ -172,18 +165,21 @@ serv_stopd(){
     fi
 }
 
+###################################################################################
+
 start_service(){
-#    monit_wrap monitor
-#    sleep 2
-    $MYMONIT reload
+    monit_assure
+    monit_wrap monitor
     monit_wrap start
 }
 
 stop_service(){
+    monit_assure
     monit_wrap stop
 }
 
 restart_service(){
+    monit_assure
     monit_wrap restart
 }
 
@@ -206,6 +202,14 @@ status_service(){
     my_return
 }
 
+remove_service(){
+    rm -f "$MONITFILE"
+    RETVAL="$?"
+    my_return "Files removed $MONITFILE"
+    # FIXME: some other reread?
+    serv --quiet monit reload
+}
+
 on_service(){
     #TODO check that non exist .off file
     #TODO check that file already exist
@@ -215,37 +219,33 @@ on_service(){
 }
 
 off_service(){
-    mv $SERVFILE ${SERVFILE}.off || my_exit "Can't disable $SERVFILE"
+    mv -v $SERVFILE ${SERVFILE}.off || my_exit "Can't disable $SERVFILE"
     remove_service
 }
 
 monit_wrap(){
-    monit_assure
-
     echo "$MYMONIT $1 $NEWSERVNAME"
     $MYMONIT $1 $NEWSERVNAME
-    RETVAL="$?"
-    my_return    
 }
 
 monit_assure(){
-    exist_monit_conf || full_init
-    monit_install || my_exit "Monit not installed."
+    #TODO change $MYMONIT to $MONITPACKAGE
+    epm assure $MYMONIT || exit
+    exist_file $MONITFILE && return
+    read_service_info
+    create_monit
+}
+
+monit_reload()
+{
+    # TODO: всё время reload
     $MYMONIT reload
     sleep 2
-    #serv --quiet monit start
-    #serv --quiet monit reload
 }
 
-monit_install(){
-    #TODO change $MYMONIT to $MONITPACKAGE
-    epm assure $MYMONIT
-    #TODO start only after install
-    #serv --quiet monit start #TODO check it and add depends on epm
-    RETVAL="$?"
-}
 
 exist_file(){
+    # FIXME: страшный сон
     if ! [ -e "$1" ] ; then
         RETVAL=1
         my_return "Config file $1 has not been found"
@@ -255,9 +255,6 @@ exist_file(){
     fi
 }
 
-exist_monit_conf(){
-    exist_file $MONITFILE    
-}
 
 #TODO need refactor, rewrite
 my_getopts(){
@@ -287,6 +284,9 @@ my_getopts(){
          restart)
 	    restart_service
             ;;
+         reload)
+	    echo "TODO: add support ExecReload=/bin/kill -USR1 $MAINPID"
+            ;;
 	 summary)
             summary_service
             ;;
@@ -312,19 +312,13 @@ my_getopts(){
     
 }
 
-remove_service(){
-    rm -f "$MONITFILE"
-    RETVAL="$?"
-    my_return "Files removed $MONITFILE"
-    serv --quiet monit reload
-}
 
 list_service(){
     RETVAL=0
     description_string="Description="
     
 #    echo ""
-    echo "List of $SCRIPTNAME service files in $SERVDIR"
+    echo "List of $MYNAMEIS service files in $SERVDIR"
     echo ""
 
     for i in ${SERVDIR}/* ; do
@@ -336,6 +330,7 @@ list_service(){
     my_exit "List"
 }
 
+# TODO: no global RETVAL!
 my_return(){
     $VERBOSE && echo "$1"
     return $RETVAL
@@ -373,7 +368,7 @@ my_exit_file(){
 
 help(){
     echo "$SCRIPTNAME <service file name> [start|stop|restart|status|summary|remove|list|on|off]"
-    echo "Create service from programm and control their procces"
+    echo "Create service from program and control their procces"
     echo ""
     echo "example: put service file to ${SERVDIR}/example.service and run # $SCRIPTNAME example start"
     echo "example: put service file to $SYSTEMDDIR/example.service and run # $SCRIPTNAME example on"
@@ -382,17 +377,28 @@ help(){
     my_exit
 }
 
-full_init(){
-    read_config
-    check_conf || my_exit "Dirеctory $WorkingDirectory does not exist."
-    create_monit || my_return_file $MONITFILE
+init_serv()
+{
+    mkdir -vp $SERVDIR $DEFAULTLOGDIR $RUNDIR &> /dev/null
+
+    SERVNAME="$1"
+    SERVFILE="$SERVDIR/${SERVNAME}.service"
+    NEWSERVNAME="${SERVNAME}"
+    MONITFILE="$MONITDIR/$NEWSERVNAME"
+
+    #TODO remove hack for some operation 
+    if [ "list" = "$SERVNAME" ] ; then
+	list_service
+	exit
+    fi
+
+    if [ --help = "$SERVNAME" ] || [ -h = "$SERVNAME" ] || [ help = "$SERVNAME" ] || [ -z "$SERVNAME" ]; then
+	help
+	exit
+    fi
 }
 
-run(){
-    #TODO rewrite for start from my_getopts $2
-    init_serv $1
-    shift
-    my_getopts $@
-}
-
-run $@
+#TODO rewrite for start from my_getopts $2
+init_serv "$1"
+shift
+my_getopts "$@"
