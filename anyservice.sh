@@ -388,7 +388,7 @@ list_services()
     echo "List of $MYNAMEIS files in $SERVDIR:"
     echo ""
 
-    for i in ${SERVDIR}/* ; do
+    for i in ${SERVDIR}/*.service ; do
         [ -s "$i" ] || continue
 	echo "$(basename $i)"
 	cat "$i" | grep "$description_string" | sed "s/$description_string/ /g"
