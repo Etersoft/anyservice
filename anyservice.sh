@@ -7,7 +7,7 @@ INITDIR=/etc/init.d
 SYSTEMDDIR="/lib/systemd/system"
 SCRIPTNAME="$(basename $0)"
 RUNDIR="/var/run/$MYNAMEIS"
-DEFAULTLOGDIR="/var/log/$MYNAMEIS"
+LOGDIR="/var/log/$MYNAMEIS"
 
 # TODO: allow change it
 VERBOSE=false
@@ -167,9 +167,6 @@ prestartd_service()
 
 serv_startd()
 {
-    LOGDIR="$DEFAULTLOGDIR/$SERVNAME/"
-    mkdir -p $LOGDIR || exit
-
     read_service_info || exit
 
     touch $PIDFile
@@ -247,7 +244,8 @@ monit_wrap()
 monit_reload()
 {
     $MYMONIT reload
-    sleep 2
+    # TODO: add real wait for end of reload
+    sleep 3
 }
 
 is_monited()
@@ -431,7 +429,7 @@ init_serv()
 	exit
     fi
 
-    mkdir -vp $SERVDIR $DEFAULTLOGDIR $RUNDIR &> /dev/null
+    mkdir -vp $SERVDIR $LOGDIR $RUNDIR &> /dev/null
 
     SERVFILE="$SERVDIR/${SERVNAME}.service"
     MONITSERVNAME="$MYNAMEIS-${SERVNAME}"
