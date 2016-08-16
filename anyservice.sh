@@ -3,6 +3,7 @@ MYNAMEIS="anyservice"
 MYMONIT="monit"
 MONITDIR="/etc/monit.d"
 SERVDIR="/etc/systemd-lite"
+INITDIR=/etc/init.d
 SYSTEMDDIR="/lib/systemd/system"
 SCRIPTNAME="$(basename $0)"
 RUNDIR="/var/run/$MYNAMEIS"
@@ -183,6 +184,24 @@ serv_stopd(){
     fi
 }
 
+# NOTE: false positive on systems with systemd
+# check if the service is handled by anyservice
+serv_checkd()
+{
+    # not, if there is regular service with the name
+    [ -d "$INITDIR/$SERVNAME" ] && return 1
+
+    # yes, the service is anyservice driven
+    [ -r "$SERVFILE" ] && return 0
+
+    # yes, the service is anyservice driven (just disabled)
+    [ -r "$SERVFILE.off" ] && return 0
+
+    # yes, the service can be anyservice driven
+    [ -r "$SYSTEMDDIR/$SERVNAME.service" ] && return 0
+    return 1
+}
+
 ###################################################################################
 
 start_service(){
@@ -313,6 +332,9 @@ check_internal_command(){
 	    ;;
          stopd)
 	    serv_stopd
+            ;;
+         checkd)
+            serv_checkd
             ;;
          *)
             check_user_command "$@"
