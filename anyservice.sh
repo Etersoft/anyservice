@@ -110,6 +110,9 @@ create_monit_file()
 
     echo "Create $MONITFILE ..."
     touch $MONITFILE || exit
+    [ -n "$PIDFile" ] || fatal "PIDFile is missed"
+    [ -n "$SERVNAME" ] || fatal "SERVNAME is missed"
+    [ -n "$MONITSERVNAME" ] || fatal "MONITSERVNAME is missed"
 
 cat <<EOF >"$MONITFILE"
 check process $MONITSERVNAME with pidfile $PIDFile
