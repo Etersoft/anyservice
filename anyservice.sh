@@ -103,12 +103,12 @@ create_monit_file()
     epm assure $MYMONIT || exit
     need_update_file "$SERVFILE" "$MONITFILE" || return 0
 
-echo "Create $MONITFILE ..."
-touch $MONITFILE || exit
+    echo "Create $MONITFILE ..."
+    touch $MONITFILE || exit
 
 cat <<EOF >"$MONITFILE"
 check process $MONITSERVNAME with pidfile $PIDFile
-        group daemons
+        group $MYNAMEIS
         start program = "$FULLSCRIPTPATH $SERVNAME startd"
         stop  program = "$FULLSCRIPTPATH $SERVNAME stopd"
         $MyRestart
@@ -120,6 +120,14 @@ monit_reload
 
 }
 
+remove_monit_file()
+{
+    # remove from monit
+    rm -fv "$MONITFILE" || return
+    # FIXME: some other reread?
+    #serv --quiet monit reload
+    monit_reload
+}
 
 # FIXME: обычно это пишется в начале файла, а не в конце
 is_auto_created()
@@ -221,10 +229,29 @@ serv_isautostarted()
 
 ###################################################################################
 
+monit_wrap()
+{
+    echo "$MYMONIT $1 $MONITSERVNAME"
+    $MYMONIT $1 $MONITSERVNAME
+}
+
+monit_reload()
+{
+    $MYMONIT reload
+    sleep 2
+}
+
+is_monited()
+{
+    [ -s "$MONITFILE" ] || return
+    monit_wrap status >/dev/null 2>/dev/null
+}
+
 start_service()
 {
-    monit_wrap monitor
+    create_monit_file
     monit_wrap start
+    monit_wrap monitor
 }
 
 stop_service()
@@ -234,7 +261,10 @@ stop_service()
 
 restart_service()
 {
+    is_monited || fatal "Service $SERVNAME is stopped, skipping"
+    create_monit_file
     monit_wrap restart
+    monit_wrap monitor
 }
 
 summary_service()
@@ -247,6 +277,7 @@ status_service()
 {
     echo "$MYMONIT status $MONITSERVNAME"
     #TODO check
+    [ -s "$MONITFILE" ] || fatal "Service $SERVNAME is not scheduled"
     $MYMONIT status | grep -A20 $MONITSERVNAME|grep -B20 'data collected' -m1
 }
 
@@ -261,36 +292,23 @@ on_service()
             ln -s "$SYSTEMDDIR/${SERVNAME}.service" "$SERVFILE" || fatal "Can't enable $SYSTEMDDIR/$1"
         fi
     fi
+
     start_service
 }
 
 off_service()
 {
-    mv -v $SERVFILE ${SERVFILE}.off
+    is_monited && stop_service
 
-    # remove from monit
-    rm -fv "$MONITFILE"
-    # FIXME: some other reread?
-    #serv --quiet monit reload
-    monit_reload
+    serv_isautostarted && mv -v $SERVFILE ${SERVFILE}.off
+
+    remove_monit_file
 }
 
-monit_wrap()
-{
-    echo "$MYMONIT $1 $MONITSERVNAME"
-    $MYMONIT $1 $MONITSERVNAME
-}
-
-monit_reload()
-{
-    $MYMONIT reload
-    sleep 2
-}
 
 check_user_command()
 {
     read_service_info
-    create_monit_file
 
     # next check for user calls
     case "$1" in
