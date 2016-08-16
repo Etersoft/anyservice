@@ -215,7 +215,7 @@ serv_stopd()
 serv_checkd()
 {
     # not, if there is regular service with the name
-    [ -d "$INITDIR/$SERVNAME" ] && return 1
+    [ -r "$INITDIR/$SERVNAME" ] && return 1
 
     # yes, the service is anyservice driven
     [ -r "$SERVFILE" ] && return 0
