@@ -202,6 +202,13 @@ serv_checkd()
     return 1
 }
 
+serv_isautostarted()
+{
+    serv_checkd || return
+    # will autostarted!
+    [ -r "$SERVFILE" ]
+}
+
 ###################################################################################
 
 start_service(){
@@ -312,6 +319,7 @@ check_user_command()
             status_service
             ;;
          *)
+            echo "Unknown command: $1"
             help
             exit 1
             ;;
@@ -335,6 +343,9 @@ check_internal_command(){
             ;;
          checkd)
             serv_checkd
+            ;;
+         isautostarted)
+            serv_isautostarted
             ;;
          *)
             check_user_command "$@"
