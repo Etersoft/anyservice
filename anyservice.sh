@@ -25,7 +25,8 @@ fatal()
 }
 
 # Read params from .service file
-read_config(){
+read_config()
+{
 
     exist_file $SERVFILE || return
 
@@ -47,7 +48,8 @@ read_config(){
 }
 
 # Improve params
-check_conf(){
+check_conf()
+{
     if [ -z "$PIDFile" ] ; then
 	#TODO check permission for $User
         PIDFile=$RUNDIR/"${SERVNAME}.pid"
@@ -82,7 +84,8 @@ read_service_info()
 }
 
 # TODO check this
-need_update_file(){ 
+need_update_file()
+{
     #return 0 if file non exist or $2 older that $1
     #servfile_non_exist
     #example: need_update_file serv monit #if monit older that serv return 0
@@ -119,18 +122,23 @@ monit_reload
 
 
 # FIXME: обычно это пишется в начале файла, а не в конце
-is_auto_created(){
+is_auto_created()
+{
     [ "`tail -n 1 $1`" = "$AUTOSTRING" ]
 }
 
-get_home_dir(){ #Get home dir path by User name
+# Get home dir path by User name
+get_home_dir()
+{
     getent passwd "$1" | cut -d: -f6
 }
 
 #=============== stop and start section ==========================
 # *d command really start serv, without d run command over monit
 
-prestartd_service(){ #Change dir to $1 and really run programm from $2
+# Change dir to $1 and really run programm from $2
+prestartd_service()
+{
     #umask 0002
     mkdir -p $1 || fatal "Can't create dir $1"
     cd $1 || fatal "Can't change dir $1"
@@ -140,7 +148,8 @@ prestartd_service(){ #Change dir to $1 and really run programm from $2
     exec "$@"
 }
 
-serv_startd(){
+serv_startd()
+{
     LOGDIR="$DEFAULTLOGDIR/$SERVNAME/"
     mkdir -p $LOGDIR || exit
 
@@ -174,7 +183,8 @@ serv_startd(){
     #ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
 }
 
-serv_stopd(){
+serv_stopd()
+{
     read_service_info || exit
 
     if [ -s "$PIDFile" ] ; then
@@ -211,31 +221,37 @@ serv_isautostarted()
 
 ###################################################################################
 
-start_service(){
+start_service()
+{
     monit_wrap monitor
     monit_wrap start
 }
 
-stop_service(){
+stop_service()
+{
     monit_wrap stop
 }
 
-restart_service(){
+restart_service()
+{
     monit_wrap restart
 }
 
-summary_service(){
+summary_service()
+{
     echo "$MYMONIT summary $MONITSERVNAME"
     $MYMONIT summary | grep $MONITSERVNAME
 }
 
-status_service(){
+status_service()
+{
     echo "$MYMONIT status $MONITSERVNAME"
     #TODO check
     $MYMONIT status | grep -A20 $MONITSERVNAME|grep -B20 'data collected' -m1
 }
 
-on_service(){
+on_service()
+{
     #TODO check that non exist .off file
     #TODO check that file already exist
     if [ ! -e "$SERVFILE" ] ; then
@@ -248,7 +264,8 @@ on_service(){
     start_service
 }
 
-off_service(){
+off_service()
+{
     mv -v $SERVFILE ${SERVFILE}.off
 
     # remove from monit
@@ -258,7 +275,8 @@ off_service(){
     monit_reload
 }
 
-monit_wrap(){
+monit_wrap()
+{
     echo "$MYMONIT $1 $MONITSERVNAME"
     $MYMONIT $1 $MONITSERVNAME
 }
@@ -270,7 +288,8 @@ monit_reload()
 }
 
 
-exist_file(){
+exist_file()
+{
     [ -e "$1" ]
 }
 
@@ -315,8 +334,8 @@ check_user_command()
 
 }
 
-check_internal_command(){
-
+check_internal_command()
+{
     # first check for internal calls
     case "$1" in
          prestartd)
@@ -342,7 +361,8 @@ check_internal_command(){
 }
 
 
-list_services(){
+list_services()
+{
     description_string="Description="
     
 #    echo ""
@@ -358,7 +378,8 @@ list_services(){
 }
 
 
-help(){
+help()
+{
     echo "$SCRIPTNAME <service file name> [start|stop|restart|status|summary|list|on|off]"
     echo "Create service from program and control their process"
     echo ""
