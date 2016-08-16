@@ -244,9 +244,9 @@ on_service(){
     #TODO check that file already exist
     if [ ! -e "$SERVFILE" ] ; then
         if [ -e ${SERVFILE}.off ] ; then
-            ln -s "$SYSTEMDDIR/${SERVNAME}.service" $SERVFILE || my_exit "Can't enable $SYSTEMDDIR/$1"
-        else
             mv -v ${SERVFILE}.off ${SERVFILE}
+        else
+            ln -s "$SYSTEMDDIR/${SERVNAME}.service" "$SERVFILE" || my_exit "Can't enable $SYSTEMDDIR/$1"
         fi
     fi
     start_service
