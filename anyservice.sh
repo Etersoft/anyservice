@@ -424,7 +424,7 @@ init_serv()
     mkdir -vp $SERVDIR $DEFAULTLOGDIR $RUNDIR &> /dev/null
 
     SERVFILE="$SERVDIR/${SERVNAME}.service"
-    NEWSERVNAME="${SERVNAME}"
+    NEWSERVNAME="$MYNAMEIS-${SERVNAME}"
     MONITFILE="$MONITDIR/$NEWSERVNAME"
 
     #TODO remove hack for some operation 
