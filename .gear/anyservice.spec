@@ -25,11 +25,11 @@ Anyservice - scripts for making systemd like service from any programs
 
 %install
 mkdir -p %buildroot/%_bindir/
-mkdir -p %buildroot/etc/systemd-lite/
-mkdir -p %buildroot/var/run/anyservice/
-mkdir -p %buildroot/var/log/anyservice/
+mkdir -p %buildroot/etc/%name/
+mkdir -p %buildroot/var/run/%name/
+mkdir -p %buildroot/var/log/%name/
 
-cp example.service %buildroot/etc/systemd-lite/
+cp example.service %buildroot/etc/%name/
 cp %name.sh %buildroot/%_bindir/%name
 
 %check
@@ -37,12 +37,12 @@ cp %name.sh %buildroot/%_bindir/%name
 
 %pre
 %files
-%dir /etc/systemd-lite/
-%config(noreplace) /etc/systemd-lite/*.service
+%dir /etc/%name/
+%config(noreplace) /etc/%name/*.service
 %attr(755,root,root) %_bindir/%name
 
-%dir /var/run/anyservice/
-%dir /var/log/anyservice/
+%dir /var/run/%name/
+%dir /var/log/%name/
 
 %changelog
 * Mon Aug 15 2016 Vitaly Lipatov <lav@altlinux.ru> 0.2-alt1

@@ -24,7 +24,7 @@ echo myWorkingDirectory $WorkingDirectory
 }
 
 test_work(){
-	SERVDIR="/etc/systemd-lite"
+	SERVDIR="/etc/anyservice"
 	my_test_service="top"
 	MYTIMETOSLEEP=65
 	MYPID="/var/run/${my_test_service}.pid"

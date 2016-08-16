@@ -2,7 +2,7 @@
 MYNAMEIS="anyservice"
 MYMONIT="monit"
 MONITDIR="/etc/monit.d"
-SERVDIR="/etc/systemd-lite"
+SERVDIR="/etc/$MYNAMEIS"
 INITDIR=/etc/init.d
 SYSTEMDDIR="/lib/systemd/system"
 SCRIPTNAME="$(basename $0)"
