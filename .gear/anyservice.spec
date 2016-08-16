@@ -29,7 +29,7 @@ mkdir -p %buildroot/etc/%name/
 mkdir -p %buildroot/var/run/%name/
 mkdir -p %buildroot/var/log/%name/
 
-cp example.service %buildroot/etc/%name/
+cp example.service %buildroot/etc/%name/example.service.off
 cp %name.sh %buildroot/%_bindir/%name
 
 %check
@@ -38,7 +38,7 @@ cp %name.sh %buildroot/%_bindir/%name
 %pre
 %files
 %dir /etc/%name/
-%config(noreplace) /etc/%name/*.service
+%config(noreplace) /etc/%name/*.service.off
 %attr(755,root,root) %_bindir/%name
 
 %dir /var/run/%name/
