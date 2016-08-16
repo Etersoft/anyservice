@@ -28,7 +28,7 @@ fatal()
 read_config()
 {
 
-    exist_file $SERVFILE || return
+    [ -s "$SERVFILE" ] || return
 
     #TODO check that last file line is empty or add line !!!
 
@@ -286,13 +286,6 @@ monit_reload()
     $MYMONIT reload
     sleep 2
 }
-
-
-exist_file()
-{
-    [ -e "$1" ]
-}
-
 
 check_user_command()
 {
