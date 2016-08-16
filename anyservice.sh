@@ -24,6 +24,11 @@ fatal()
     exit 1
 }
 
+info()
+{
+    $VERBOSE && echo "$1"
+}
+
 # Read params from .service file
 read_config()
 {
@@ -66,13 +71,13 @@ check_conf()
 
     if [ -z "$WorkingDirectory" ] || [ ! -d "$WorkingDirectory" ] ; then
         #TODO change dir
-        echo "Directory $WorkingDirectory does not exist. Using /tmp"
+        info "Directory $WorkingDirectory does not exist. Using /tmp"
         WorkingDirectory="/tmp"
     fi
 
 #TODO check whis && [ getent passwd "$User" ]
     if [ -z "$User" ] ; then
-    	#echo "User is not passed, uses root"
+    	info "User is not passed, uses root"
     	User=root
     fi
 }
