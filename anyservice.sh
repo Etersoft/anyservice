@@ -33,7 +33,7 @@ info()
 read_config()
 {
 
-    [ -s "$SERVFILE" ] || return
+    [ -s "$SERVFILE" ] || fatal "Can't read $SERVFILE. Service is not prepared for start. Use 'on' command."
 
     #TODO check that last file line is empty or add line !!!
 
@@ -94,11 +94,12 @@ need_update_file()
     #return 0 if file non exist or $2 older that $1
     #servfile_non_exist
     #example: need_update_file serv monit #if monit older that serv return 0
-    if [ ! -e "$2" ] ; then
+    if [ ! -s "$2" ] ; then
 	return 0
     elif [ "$1" -nt "$2" ] && is_auto_created $2 ; then
 	return 0
     else
+        is_auto_created $2 || fatal "File $2 changed by human. Please, remote it manually"
 	return 1
     fi
 }
@@ -109,10 +110,10 @@ create_monit_file()
     need_update_file "$SERVFILE" "$MONITFILE" || return 0
 
     echo "Create $MONITFILE ..."
-    touch $MONITFILE || exit
     [ -n "$PIDFile" ] || fatal "PIDFile is missed"
     [ -n "$SERVNAME" ] || fatal "SERVNAME is missed"
     [ -n "$MONITSERVNAME" ] || fatal "MONITSERVNAME is missed"
+    touch $MONITFILE || exit
 
 cat <<EOF >"$MONITFILE"
 check process $MONITSERVNAME with pidfile $PIDFile
@@ -301,6 +302,7 @@ on_service()
         fi
     fi
 
+    read_service_info
     start_service
 }
 
@@ -316,13 +318,19 @@ off_service()
 
 check_user_command()
 {
+
+    if [ "$1" = "on" ] ; then
+        on_service
+        return
+    fi
+
     read_service_info
 
     # next check for user calls
     case "$1" in
-         on)
-	    on_service
-	    ;;
+        # on)
+	#    on_service
+	#    ;;
          off)
 	    off_service
 	    ;;
@@ -359,7 +367,7 @@ check_internal_command()
     case "$1" in
          prestartd)
             shift
-	    prestartd_service "$@"
+         prestartd_service "$@"
 	    ;;
          startd)
 	    serv_startd
