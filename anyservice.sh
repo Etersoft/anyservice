@@ -100,10 +100,10 @@ if need_update_file "$SERVFILE" "$MONITFILE" ; then
 echo "Create $MONITFILE ..."
 touch $MONITFILE || exit
 cat <<EOF >"$MONITFILE"
-check process $NEWSERVNAME with pidfile $PIDFile
+check process $MONITSERVNAME with pidfile $PIDFile
         group daemons
-        start program = "$FULLSCRIPTPATH $NEWSERVNAME startd"
-        stop  program = "$FULLSCRIPTPATH $NEWSERVNAME stopd"
+        start program = "$FULLSCRIPTPATH $SERVNAME startd"
+        stop  program = "$FULLSCRIPTPATH $SERVNAME stopd"
         $MyRestart
 
 $AUTOSTRING
@@ -140,7 +140,7 @@ prestartd_service(){ #Change dir to $1 and really run programm from $2
 }
 
 serv_startd(){
-    LOGDIR="$DEFAULTLOGDIR/$NEWSERVNAME/"
+    LOGDIR="$DEFAULTLOGDIR/$SERVNAME/"
     mkdir -p $LOGDIR || exit
 
     read_service_info || exit
@@ -168,7 +168,7 @@ serv_startd(){
     # run via ourself script as wrapper
     /sbin/start-stop-daemon --start --pidfile $PIDFile --background \
         --make-pidfile -c $User --exec $FULLSCRIPTPATH --startas $FULLSCRIPTPATH \
-        -- $NEWSERVNAME prestartd $WorkingDirectory $EXECSTART 2>&1 | tee -a $LOGDIR/$NEWSERVNAME.log
+        -- $SERVNAME prestartd $WorkingDirectory $EXECSTART 2>&1 | tee -a $LOGDIR/$SERVNAME.log
 
     #ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
 }
@@ -225,16 +225,16 @@ restart_service(){
 }
 
 summary_service(){
-    echo "$MYMONIT summary $NEWSERVNAME"
-    $MYMONIT summary | grep $NEWSERVNAME
+    echo "$MYMONIT summary $MONITSERVNAME"
+    $MYMONIT summary | grep $MONITSERVNAME
     RETVAL="$?"
     my_return
 }
 
 status_service(){
-    echo "$MYMONIT status $NEWSERVNAME"
+    echo "$MYMONIT status $MONITSERVNAME"
     #TODO check
-    $MYMONIT status | grep -A20 $NEWSERVNAME|grep -B20 'data collected' -m1
+    $MYMONIT status | grep -A20 $MONITSERVNAME|grep -B20 'data collected' -m1
     RETVAL="$?"
     my_return
 }
@@ -264,8 +264,8 @@ off_service(){
 }
 
 monit_wrap(){
-    echo "$MYMONIT $1 $NEWSERVNAME"
-    $MYMONIT $1 $NEWSERVNAME
+    echo "$MYMONIT $1 $MONITSERVNAME"
+    $MYMONIT $1 $MONITSERVNAME
 }
 
 monit_reload()
@@ -435,8 +435,8 @@ init_serv()
     mkdir -vp $SERVDIR $DEFAULTLOGDIR $RUNDIR &> /dev/null
 
     SERVFILE="$SERVDIR/${SERVNAME}.service"
-    NEWSERVNAME="$MYNAMEIS-${SERVNAME}"
-    MONITFILE="$MONITDIR/$NEWSERVNAME"
+    MONITSERVNAME="$MYNAMEIS-${SERVNAME}"
+    MONITFILE="$MONITDIR/$MONITSERVNAME"
 
     #TODO remove hack for some operation 
     if [ "list" = "$SERVNAME" ] ; then
