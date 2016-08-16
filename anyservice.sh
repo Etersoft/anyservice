@@ -18,6 +18,12 @@ MYSCRIPTDIR=$(dirname "$0")
 FULLSCRIPTPATH=$MYSCRIPTDIR/$SCRIPTNAME
 AUTOSTRING="#The file has been created automatically with $FULLSCRIPTPATH"
 
+fatal()
+{
+    $VERBOSE && echo "$1" >&2
+    exit 1
+}
+
 # Read params from .service file
 read_config(){
 
@@ -126,8 +132,8 @@ get_home_dir(){ #Get home dir path by User name
 
 prestartd_service(){ #Change dir to $1 and really run programm from $2
     #umask 0002
-    mkdir -p $1 || my_exit "Can't create dir $1"
-    cd $1 || my_exit "Can't change dir $1"
+    mkdir -p $1 || fatal "Can't create dir $1"
+    cd $1 || fatal "Can't change dir $1"
     #export HOME=$2
     shift
 
@@ -174,7 +180,7 @@ serv_stopd(){
     if [ -s "$PIDFile" ] ; then
         /sbin/start-stop-daemon --stop --pidfile $PIDFile
     else
-	my_exit "No $PIDFile"
+	fatal "No PIDFile '$PIDFile'"
     fi
 }
 
@@ -236,7 +242,7 @@ on_service(){
         if [ -e ${SERVFILE}.off ] ; then
             mv -v ${SERVFILE}.off ${SERVFILE}
         else
-            ln -s "$SYSTEMDDIR/${SERVNAME}.service" "$SERVFILE" || my_exit "Can't enable $SYSTEMDDIR/$1"
+            ln -s "$SYSTEMDDIR/${SERVNAME}.service" "$SERVFILE" || fatal "Can't enable $SYSTEMDDIR/$1"
         fi
     fi
     start_service
@@ -351,10 +357,6 @@ list_services(){
     done
 }
 
-my_exit(){
-    $VERBOSE && echo "$1"
-    exit 1
-}
 
 help(){
     echo "$SCRIPTNAME <service file name> [start|stop|restart|status|summary|list|on|off]"
