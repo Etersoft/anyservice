@@ -1,5 +1,5 @@
 Name: anyservice
-Version: 0.2
+Version: 0.3
 Release: alt1
 
 Summary: Anyservice - scripts for making systemd like service from any programs
@@ -8,12 +8,15 @@ License: MIT
 Group: System/Base
 Url: http://wiki.etersoft.ru/Anyservice
 
+# Source-git: https://github.com/Etersoft/anyservice.git
 Source: %name-%version.tar
 
 Packager: Danil Mikhailov <danil@altlinux.org>
 
 BuildArch: noarch
 BuildPreReq: rpm-build-compat
+
+#Requires: eepm >= 1.9.0
 
 %description
 Anyservice - scripts for making systemd like service from any programs
@@ -45,6 +48,14 @@ cp %name.sh %buildroot/%_bindir/%name
 %dir /var/log/%name/
 
 %changelog
+* Tue Aug 16 2016 Vitaly Lipatov <lav@altlinux.ru> 0.3-alt1
+- big refactoring
+- realize checkd and isautostarted
+- add prefix for monit
+- put example.service disabled by default
+- improve monit status checking
+- Caution: use /etc/anyservice as anyservice dir
+
 * Mon Aug 15 2016 Vitaly Lipatov <lav@altlinux.ru> 0.2-alt1
 - anyservice.sh: some refactoring
 - anyservice.sh: use .off file if exists
