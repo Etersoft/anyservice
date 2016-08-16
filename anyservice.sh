@@ -24,8 +24,7 @@ AUTOSTRING="#The file has been created automatically with $FULLSCRIPTPATH"
 # Read params from .service file
 read_config(){
 
-    #TODO check it. Test remove file, run function
-    exist_file $SERVFILE || my_exit_echo "Config file $SERVFILE has not been found"
+    exist_file $SERVFILE || return
 
     #TODO check that last file line is empty or add line !!!
 
