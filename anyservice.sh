@@ -15,9 +15,6 @@ VERBOSE=false
 MYSCRIPTDIR=$(dirname "$0")
 [ "$MYSCRIPTDIR" = "." ] && MYSCRIPTDIR="$(pwd)"
 
-# FIXME: drop it
-RETVAL=1
-
 FULLSCRIPTPATH=$MYSCRIPTDIR/$SCRIPTNAME
 AUTOSTRING="#The file has been created automatically with $FULLSCRIPTPATH"
 
@@ -60,15 +57,14 @@ check_conf(){
     fi
 
     if [ -z "$WorkingDirectory" ] || [ ! -d "$WorkingDirectory" ] ; then
-        RETVAL=1
-        #TODO chane dir
+        #TODO change dir
+        echo "Directory $WorkingDirectory does not exist. Using /tmp"
         WorkingDirectory="/tmp"
-        my_echo "Directory $WorkingDirectory does not exist. Using $WorkingDirectory"
     fi
 
 #TODO check whis && [ getent passwd "$User" ]
     if [ -z "$User" ] ; then
-    	my_return "User not passed, uses root"
+    	#echo "User is not passed, uses root"
     	User=root
     fi
 }
@@ -93,11 +89,14 @@ need_update_file(){
     fi
 }
 
-create_monit_file(){
-epm assure $MYMONIT || exit
-if need_update_file "$SERVFILE" "$MONITFILE" ; then
+create_monit_file()
+{
+    epm assure $MYMONIT || exit
+    need_update_file "$SERVFILE" "$MONITFILE" || return 0
+
 echo "Create $MONITFILE ..."
 touch $MONITFILE || exit
+
 cat <<EOF >"$MONITFILE"
 check process $MONITSERVNAME with pidfile $PIDFile
         group daemons
@@ -107,12 +106,9 @@ check process $MONITSERVNAME with pidfile $PIDFile
 
 $AUTOSTRING
 EOF
+
 monit_reload
-my_return "Monit is restarting"
-else
-RETVAL=1
-my_return
-fi
+
 }
 
 
@@ -178,7 +174,6 @@ serv_stopd(){
     if [ -s "$PIDFile" ] ; then
         /sbin/start-stop-daemon --stop --pidfile $PIDFile
     else
-        RETVAL="$?"
 	my_exit "No $PIDFile"
     fi
 }
@@ -226,16 +221,12 @@ restart_service(){
 summary_service(){
     echo "$MYMONIT summary $MONITSERVNAME"
     $MYMONIT summary | grep $MONITSERVNAME
-    RETVAL="$?"
-    my_return
 }
 
 status_service(){
     echo "$MYMONIT status $MONITSERVNAME"
     #TODO check
     $MYMONIT status | grep -A20 $MONITSERVNAME|grep -B20 'data collected' -m1
-    RETVAL="$?"
-    my_return
 }
 
 on_service(){
@@ -256,10 +247,9 @@ off_service(){
 
     # remove from monit
     rm -fv "$MONITFILE"
-    RETVAL="$?"
-    my_return "Files removed $MONITFILE"
     # FIXME: some other reread?
-    serv --quiet monit reload
+    #serv --quiet monit reload
+    monit_reload
 }
 
 monit_wrap(){
@@ -275,14 +265,7 @@ monit_reload()
 
 
 exist_file(){
-    # FIXME: страшный сон
-    if ! [ -e "$1" ] ; then
-        RETVAL=1
-        my_return "Config file $1 has not been found"
-    else
-	RETVAL=0
-        my_return "Config file $1 has been found"
-    fi
+    [ -e "$1" ]
 }
 
 
@@ -354,67 +337,34 @@ check_internal_command(){
 
 
 list_services(){
-    RETVAL=0
     description_string="Description="
     
 #    echo ""
-    echo "List of $MYNAMEIS service files in $SERVDIR"
+    echo "List of $MYNAMEIS files in $SERVDIR:"
     echo ""
 
     for i in ${SERVDIR}/* ; do
-	echo "$(basename $i)" 
+        [ -s "$i" ] || continue
+	echo "$(basename $i)"
 	cat "$i" | grep "$description_string" | sed "s/$description_string/ /g"
         echo ""
     done
-
-    my_exit "List"
-}
-
-# TODO: no global RETVAL!
-my_return(){
-    $VERBOSE && echo "$1"
-    return $RETVAL
-}
-
-my_echo(){
-    $VERBOSE && echo "$1"
 }
 
 my_exit(){
     $VERBOSE && echo "$1"
-    exit $RETVAL
-}
-
-my_exit_echo(){
-    echo "$1"
-    exit $RETVAL
-}
-
-write_non_empty(){
-    if [ -n "$1" ] ; then
-        echo $1 > $2
-    fi
-}
-
-my_return_file(){
-    RETVAL=1 
-    my_return "The file ${1} exists"
-}
-
-my_exit_file(){
-    RETVAL=1 
-    my_exit "The file $1 exists"
+    exit 1
 }
 
 help(){
     echo "$SCRIPTNAME <service file name> [start|stop|restart|status|summary|list|on|off]"
-    echo "Create service from program and control their procces"
+    echo "Create service from program and control their process"
     echo ""
     echo "example: put service file to ${SERVDIR}/example.service and run # $SCRIPTNAME example start"
     echo "example: put service file to $SYSTEMDDIR/example.service and run # $SCRIPTNAME example on"
-    echo "example: $SCRIPTNAME <list|--help> #List of services or help"
+    echo "example: $SCRIPTNAME <list> - list of services"
+    echo "example: $SCRIPTNAME --help - print this help"
     echo ""
-    my_exit
 }
 
 init_serv()
