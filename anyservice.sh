@@ -1,12 +1,12 @@
 #!/bin/bash
 MYNAMEIS="anyservice"
 MYMONIT="monit"
-MONITDIR="/etc/monit.d/"
+MONITDIR="/etc/monit.d"
 SERVDIR="/etc/systemd-lite"
 SYSTEMDDIR="/lib/systemd/system"
 SCRIPTNAME="$(basename $0)"
-RUNDIR="/var/run/$MYNAMEIS/"
-DEFAULTLOGDIR="/var/log/$MYNAMEIS/"
+RUNDIR="/var/run/$MYNAMEIS"
+DEFAULTLOGDIR="/var/log/$MYNAMEIS"
 
 # TODO: allow change it
 VERBOSE=false
@@ -37,7 +37,6 @@ read_config(){
 	    ExecStart) ExecStart="$var" ;;
 	    Restart) Restart="$var" ;;
 	    PIDFile) PIDFile="$var" ;;
-	    *)     my_return "Found an unsupported systemd option: $varname $var" ;;
 	esac
     done < "$SERVFILE"
     #TODO grep -v ^# | grep =
@@ -76,7 +75,7 @@ check_conf(){
 
 read_service_info()
 {
-    read_config
+    read_config || return
     check_conf
 }
 
@@ -94,10 +93,11 @@ need_update_file(){
     fi
 }
 
-create_monit(){
-monit_assure
+create_monit_file(){
+epm assure $MYMONIT || exit
 if need_update_file "$SERVFILE" "$MONITFILE" ; then
 echo "Create $MONITFILE ..."
+touch $MONITFILE || exit
 cat <<EOF >"$MONITFILE"
 check process $NEWSERVNAME with pidfile $PIDFile
         group daemons
@@ -116,7 +116,7 @@ fi
 }
 
 
-# FIXME: это пишется в начале файла, а не в конце
+# FIXME: обычно это пишется в начале файла, а не в конце
 is_auto_created(){
     [ "`tail -n 1 $1`" = "$AUTOSTRING" ]
 }
@@ -140,9 +140,9 @@ prestartd_service(){ #Change dir to $1 and really run programm from $2
 
 serv_startd(){
     LOGDIR="$DEFAULTLOGDIR/$NEWSERVNAME/"
-    mkdir -p $LOGDIR
+    mkdir -p $LOGDIR || exit
 
-    read_service_info
+    read_service_info || exit
 
     touch $PIDFile
     chown $User $PIDFile
@@ -173,7 +173,7 @@ serv_startd(){
 }
 
 serv_stopd(){
-    read_service_info
+    read_service_info || exit
 
     if [ -s "$PIDFile" ] ; then
         /sbin/start-stop-daemon --stop --pidfile $PIDFile
@@ -186,24 +186,19 @@ serv_stopd(){
 ###################################################################################
 
 start_service(){
-    monit_assure
     monit_wrap monitor
     monit_wrap start
 }
 
 stop_service(){
-    monit_assure
     monit_wrap stop
 }
 
 restart_service(){
-    monit_assure
     monit_wrap restart
 }
 
 summary_service(){
-    monit_assure
-
     echo "$MYMONIT summary $NEWSERVNAME"
     $MYMONIT summary | grep $NEWSERVNAME
     RETVAL="$?"
@@ -211,21 +206,11 @@ summary_service(){
 }
 
 status_service(){
-    monit_assure
-
     echo "$MYMONIT status $NEWSERVNAME"
     #TODO check
     $MYMONIT status | grep -A20 $NEWSERVNAME|grep -B20 'data collected' -m1
     RETVAL="$?"
     my_return
-}
-
-remove_service(){
-    rm -f "$MONITFILE"
-    RETVAL="$?"
-    my_return "Files removed $MONITFILE"
-    # FIXME: some other reread?
-    serv --quiet monit reload
 }
 
 on_service(){
@@ -242,8 +227,14 @@ on_service(){
 }
 
 off_service(){
-    mv -v $SERVFILE ${SERVFILE}.off || my_exit "Can't disable $SERVFILE"
-    remove_service
+    mv -v $SERVFILE ${SERVFILE}.off
+
+    # remove from monit
+    rm -fv "$MONITFILE"
+    RETVAL="$?"
+    my_return "Files removed $MONITFILE"
+    # FIXME: some other reread?
+    serv --quiet monit reload
 }
 
 monit_wrap(){
@@ -251,17 +242,8 @@ monit_wrap(){
     $MYMONIT $1 $NEWSERVNAME
 }
 
-monit_assure(){
-    #TODO change $MYMONIT to $MONITPACKAGE
-    epm assure $MYMONIT || exit
-    exist_file $MONITFILE && return
-    read_service_info
-    create_monit
-}
-
 monit_reload()
 {
-    # TODO: всё время reload
     $MYMONIT reload
     sleep 2
 }
@@ -279,19 +261,13 @@ exist_file(){
 }
 
 
-#TODO need refactor, rewrite
-my_getopts(){
-    if ! [ -n "$1" ] ; then 
-	help
-	return 1
-        #my_return
-    fi
+check_user_command()
+{
+    read_service_info
+    create_monit_file
 
-    case $1 in
-         prestartd)
-            shift
-	    prestartd_service $@
-	    ;;
+    # next check for user calls
+    case "$1" in
          on)
 	    on_service
 	    ;;
@@ -316,27 +292,36 @@ my_getopts(){
 	 status)
             status_service
             ;;
+         *)
+            help
+            exit 1
+            ;;
+    esac
+
+}
+
+check_internal_command(){
+
+    # first check for internal calls
+    case "$1" in
+         prestartd)
+            shift
+	    prestartd_service "$@"
+	    ;;
          startd)
 	    serv_startd
 	    ;;
          stopd)
 	    serv_stopd
             ;;
-	 remove)
-            remove_service
-            ;;
-	 list)
-	    list_service
-	    ;;
          *)
-            help
+            check_user_command "$@"
             ;;
     esac
-    
 }
 
 
-list_service(){
+list_services(){
     RETVAL=0
     description_string="Description="
     
@@ -390,7 +375,7 @@ my_exit_file(){
 }
 
 help(){
-    echo "$SCRIPTNAME <service file name> [start|stop|restart|status|summary|remove|list|on|off]"
+    echo "$SCRIPTNAME <service file name> [start|stop|restart|status|summary|list|on|off]"
     echo "Create service from program and control their procces"
     echo ""
     echo "example: put service file to ${SERVDIR}/example.service and run # $SCRIPTNAME example start"
@@ -402,26 +387,33 @@ help(){
 
 init_serv()
 {
-    mkdir -vp $SERVDIR $DEFAULTLOGDIR $RUNDIR &> /dev/null
-
     SERVNAME="$1"
-    SERVFILE="$SERVDIR/${SERVNAME}.service"
-    NEWSERVNAME="${SERVNAME}"
-    MONITFILE="$MONITDIR/$NEWSERVNAME"
 
-    #TODO remove hack for some operation 
-    if [ "list" = "$SERVNAME" ] ; then
-	list_service
-	exit
+    if [ -z "$SERVNAME" ]; then
+	help
+	exit 1
     fi
 
     if [ --help = "$SERVNAME" ] || [ -h = "$SERVNAME" ] || [ help = "$SERVNAME" ] || [ -z "$SERVNAME" ]; then
 	help
 	exit
     fi
+
+    mkdir -vp $SERVDIR $DEFAULTLOGDIR $RUNDIR &> /dev/null
+
+    SERVFILE="$SERVDIR/${SERVNAME}.service"
+    NEWSERVNAME="${SERVNAME}"
+    MONITFILE="$MONITDIR/$NEWSERVNAME"
+
+    #TODO remove hack for some operation 
+    if [ "list" = "$SERVNAME" ] ; then
+	list_services
+	exit
+    fi
+
 }
 
 #TODO rewrite for start from my_getopts $2
 init_serv "$1"
 shift
-my_getopts "$@"
+check_internal_command "$@"
