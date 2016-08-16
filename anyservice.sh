@@ -20,7 +20,7 @@ AUTOSTRING="#The file has been created automatically with $FULLSCRIPTPATH"
 
 fatal()
 {
-    $VERBOSE && echo "$1" >&2
+    echo "$1" >&2
     exit 1
 }
 
