@@ -177,7 +177,7 @@ serv_startd()
     HOME=$(get_home_dir $User)
 
     # Expand all variables
-    if [ -s "$EnvironmentFile" ] ; then
+    if [ -n "$EnvironmentFile" ] ; then
         # execute something like /etc/sysconfig/service
         if echo "$EnvironmentFile" | grep -q "^-" ; then
             EnvironmentFile=$(echo "$EnvironmentFile" | sed -e "s|^-||")
