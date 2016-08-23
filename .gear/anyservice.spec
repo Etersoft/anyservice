@@ -1,6 +1,6 @@
 Name: anyservice
 Version: 0.4
-Release: alt1
+Release: alt2
 
 Summary: Anyservice - scripts for making systemd like service from any programs
 
@@ -48,6 +48,9 @@ cp %name.sh %buildroot/%_bindir/%name
 %dir /var/log/%name/
 
 %changelog
+* Tue Aug 23 2016 Vitaly Lipatov <lav@altlinux.ru> 0.4-alt2
+- fix EnvironmentFile using
+
 * Tue Aug 23 2016 Vitaly Lipatov <lav@altlinux.ru> 0.4-alt1
 - fix logdir and drop obsoleted DEFAULTLOGDIR
 - fix Environment, set TMPDIR and HOME
