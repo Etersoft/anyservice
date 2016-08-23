@@ -157,8 +157,8 @@ get_home_dir()
 prestartd_service()
 {
     #umask 0002
-    mkdir -p $1 || fatal "Can't create dir $1"
-    cd $1 || fatal "Can't change dir $1"
+    mkdir -p "$1" || fatal "Can't create dir $1"
+    cd "$1" || fatal "Can't change dir $1"
     #export HOME=$2
     shift
 
@@ -172,8 +172,12 @@ serv_startd()
     touch $PIDFile
     chown $User $PIDFile
 
+    # TODO: make it better?
+    TMPDIR=/tmp
+    HOME=$(get_home_dir $User)
+
     # Expand all variables
-    if [ -n "$EnvironmentFile" ] ; then
+    if [ -s "$EnvironmentFile" ] ; then
         # execute something like /etc/sysconfig/service
         if echo "$EnvironmentFile" | grep -q "^-" ; then
             EnvironmentFile=$(echo "$EnvironmentFile" | sed -e "s|^-||")
@@ -184,7 +188,7 @@ serv_startd()
         fi
     fi
     # TODO: eval only last line
-    [ -s "$Environment" ] && eval "$Environment"
+    [ -n "$Environment" ] && eval "$Environment"
 
     # HACK: due strange problem with vars evaluation
     local EXECSTART=$(eval echo "$ExecStart")
@@ -396,7 +400,7 @@ list_services()
 
     for i in ${SERVDIR}/*.service ; do
         [ -s "$i" ] || continue
-	echo "$(basename $i)"
+	echo "$(basename $i .service)"
 	cat "$i" | grep "$description_string" | sed "s/$description_string/ /g"
         echo ""
     done
