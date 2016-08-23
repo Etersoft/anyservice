@@ -44,6 +44,7 @@ read_config()
 	    EnvironmentFile) EnvironmentFile="$var" ;;
 	    Environment) Environment="$var" ;;
 	    ExecStart) ExecStart="$var" ;;
+	    ExecReload) ExecReload="$var" ;;
 	    Restart) Restart="$var" ;;
 	    PIDFile) PIDFile="$var" ;;
 	esac
@@ -80,6 +81,12 @@ check_conf()
     	info "User is not passed, uses root"
     	User=root
     fi
+
+    MAINPID=$(cat $PIDFile)
+    if [ -z "$ExecReload" ] ; then
+	ExecReload="/bin/kill -HUP $MAINPID"
+    fi
+
 }
 
 read_service_info()
@@ -278,6 +285,12 @@ restart_service()
     monit_wrap monitor
 }
 
+reload_service()
+{
+    echo "Reload service with $ExecReload"
+    eval $ExecReload
+}
+
 summary_service()
 {
     echo "$MYMONIT summary $MONITSERVNAME"
@@ -346,7 +359,7 @@ check_user_command()
 	    restart_service
             ;;
          reload)
-	    echo "TODO: add support ExecReload=/bin/kill -USR1 $MAINPID"
+            reload_service
             ;;
 	 summary)
             summary_service
