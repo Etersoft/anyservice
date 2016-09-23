@@ -406,15 +406,17 @@ check_internal_command()
 list_services()
 {
     description_string="Description="
-    
-#    echo ""
-    echo "List of $MYNAMEIS files in $SERVDIR:"
-    echo ""
+
+    if [ -z "$QUIET" ] ; then
+        echo "List of $MYNAMEIS files in $SERVDIR:"
+        echo ""
+    fi
 
     for i in ${SERVDIR}/*.service ; do
         [ -s "$i" ] || continue
-	echo "$(basename $i .service)"
-	cat "$i" | grep "$description_string" | sed "s/$description_string/ /g"
+        echo "$(basename $i .service)"
+        [ -n "$QUIET" ] && continue
+        cat "$i" | grep "$description_string" | sed "s/$description_string/ /g"
         echo ""
     done
 }
@@ -450,6 +452,11 @@ init_serv()
 
 }
 
+QUIET=
+if [ "$1" = "--quiet" ] ; then
+    QUIET=1
+    shift
+fi
 
 if [ -z "$1" ]; then
     help
