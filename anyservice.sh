@@ -287,7 +287,7 @@ restart_service()
 
 reload_service()
 {
-    echo "Reload service with $ExecReload"
+    echo "Reload service with $(eval echo "$ExecReload")"
     eval $ExecReload
 }
 
@@ -436,16 +436,6 @@ init_serv()
 {
     SERVNAME="$1"
 
-    if [ -z "$SERVNAME" ]; then
-	help
-	exit 1
-    fi
-
-    if [ --help = "$SERVNAME" ] || [ -h = "$SERVNAME" ] || [ help = "$SERVNAME" ] || [ -z "$SERVNAME" ]; then
-	help
-	exit
-    fi
-
     mkdir -vp $SERVDIR $LOGDIR $RUNDIR &> /dev/null
 
     SERVFILE="$SERVDIR/${SERVNAME}.service"
@@ -459,6 +449,18 @@ init_serv()
     fi
 
 }
+
+
+if [ -z "$1" ]; then
+    help
+    exit 1
+fi
+
+case "$1" in
+    --help|-h|help)
+        help
+        exit
+esac
 
 #TODO rewrite for start from my_getopts $2
 init_serv "$1"
