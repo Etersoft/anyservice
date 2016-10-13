@@ -1,6 +1,5 @@
 #!/bin/bash
 MYNAMEIS="anyservice"
-MYMONIT="monit"
 MONITDIR="/etc/monit.d"
 SERVDIR="/etc/$MYNAMEIS"
 INITDIR=/etc/init.d
@@ -113,7 +112,7 @@ need_update_file()
 
 create_monit_file()
 {
-    epm assure $MYMONIT || exit
+    epm assure monit || exit
     need_update_file "$SERVFILE" "$MONITFILE" || return 0
 
     echo "Create $MONITFILE ..."
@@ -248,13 +247,13 @@ serv_isautostarted()
 
 monit_wrap()
 {
-    echo "$MYMONIT $1 $MONITSERVNAME"
-    $MYMONIT $1 $MONITSERVNAME
+    echo "monit $1 $MONITSERVNAME"
+    monit $1 $MONITSERVNAME
 }
 
 monit_reload()
 {
-    $MYMONIT reload
+    monit reload
     # TODO: add real wait for end of reload
     sleep 3
 }
@@ -293,16 +292,16 @@ reload_service()
 
 summary_service()
 {
-    echo "$MYMONIT summary $MONITSERVNAME"
-    $MYMONIT summary | grep $MONITSERVNAME
+    echo "monit summary $MONITSERVNAME"
+    monit summary | grep $MONITSERVNAME
 }
 
 status_service()
 {
-    echo "$MYMONIT status $MONITSERVNAME"
+    echo "monit status $MONITSERVNAME"
     #TODO check
     [ -s "$MONITFILE" ] || fatal "Service $SERVNAME is not scheduled"
-    $MYMONIT status | grep -A20 $MONITSERVNAME|grep -B20 'data collected' -m1
+    monit status | grep -A20 $MONITSERVNAME|grep -B20 'data collected' -m1
 }
 
 on_service()
