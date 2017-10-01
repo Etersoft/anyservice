@@ -4,6 +4,8 @@ MONITDIR="/etc/monit.d"
 SERVDIR="/etc/$MYNAMEIS"
 INITDIR=/etc/init.d
 SYSTEMDDIR="/lib/systemd/system"
+# for Fedora based
+[ -d "$SYSTEMDDIR" ] || SYSTEMDDIR="/usr/lib/systemd/system"
 SCRIPTNAME="$(basename $0)"
 RUNDIR="/var/run/$MYNAMEIS"
 LOGDIR="/var/log/$MYNAMEIS"
@@ -38,15 +40,15 @@ read_config()
 
     while IFS='=' read varname var ; do
         case "$varname" in
-	    User) User="$var" ;;
-	    WorkingDirectory) WorkingDirectory="$var" ;;
-	    EnvironmentFile) EnvironmentFile="$var" ;;
-	    Environment) Environment="$var" ;;
-	    ExecStart) ExecStart="$var" ;;
-	    ExecReload) ExecReload="$var" ;;
-	    Restart) Restart="$var" ;;
-	    PIDFile) PIDFile="$var" ;;
-	esac
+            User) User="$var" ;;
+            WorkingDirectory) WorkingDirectory="$var" ;;
+            EnvironmentFile) EnvironmentFile="$var" ;;
+            Environment) Environment="$var" ;;
+            ExecStart) ExecStart="$var" ;;
+            ExecReload) ExecReload="$var" ;;
+            Restart) Restart="$var" ;;
+            PIDFile) PIDFile="$var" ;;
+        esac
     done < "$SERVFILE"
     #TODO grep -v ^# | grep =
     #No need this, because no match in case for unsuported var
@@ -56,7 +58,7 @@ read_config()
 check_conf()
 {
     if [ -z "$PIDFile" ] ; then
-	#TODO check permission for $User
+        #TODO check permission for $User
         PIDFile=$RUNDIR/"${SERVNAME}.pid"
         #PIDFile=/tmp/"${SERVNAME}.pid"
     fi
@@ -66,7 +68,7 @@ check_conf()
     if [ -n "$Restart" ] ; then
         MyRestart="if 5 restarts with 5 cycles then timeout"
     else
-  	MyRestart=""
+        MyRestart=""
     fi
 
     if [ -z "$WorkingDirectory" ] || [ ! -d "$WorkingDirectory" ] ; then
@@ -77,13 +79,13 @@ check_conf()
 
 #TODO check whis && [ getent passwd "$User" ]
     if [ -z "$User" ] ; then
-    	info "User is not passed, uses root"
-    	User=root
+        info "User is not passed, uses root"
+        User=root
     fi
 
     MAINPID=$(cat $PIDFile)
     if [ -z "$ExecReload" ] ; then
-	ExecReload="/bin/kill -HUP $MAINPID"
+        ExecReload="/bin/kill -HUP $MAINPID"
     fi
 
 }
@@ -101,12 +103,12 @@ need_update_file()
     #servfile_non_exist
     #example: need_update_file serv monit #if monit older that serv return 0
     if [ ! -s "$2" ] ; then
-	return 0
+        return 0
     elif [ "$1" -nt "$2" ] && is_auto_created $2 ; then
-	return 0
+        return 0
     else
         is_auto_created $2 || fatal "File $2 changed by human. Please, remote it manually"
-	return 1
+        return 1
     fi
 }
 
@@ -214,7 +216,7 @@ serv_stopd()
     if [ -s "$PIDFile" ] ; then
         /sbin/start-stop-daemon --stop --pidfile $PIDFile
     else
-	fatal "No PIDFile '$PIDFile'"
+        fatal "No PIDFile '$PIDFile'"
     fi
 }
 
@@ -343,27 +345,27 @@ check_user_command()
     # next check for user calls
     case "$1" in
         # on)
-	#    on_service
-	#    ;;
+        #    on_service
+        #    ;;
          off)
-	    off_service
-	    ;;
+            off_service
+            ;;
          start)
-	    start_service
-	    ;;
+            start_service
+            ;;
          stop)
-	    stop_service
+            stop_service
             ;;
          restart)
-	    restart_service
+            restart_service
             ;;
          reload)
             reload_service
             ;;
-	 summary)
+         summary)
             summary_service
             ;;
-	 status)
+         status)
             status_service
             ;;
          *)
@@ -381,13 +383,13 @@ check_internal_command()
     case "$1" in
          prestartd)
             shift
-         prestartd_service "$@"
-	    ;;
+            prestartd_service "$@"
+            ;;
          startd)
-	    serv_startd
-	    ;;
+            serv_startd
+            ;;
          stopd)
-	    serv_stopd
+            serv_stopd
             ;;
          checkd)
             serv_checkd
@@ -445,8 +447,8 @@ init_serv()
 
     #TODO remove hack for some operation 
     if [ "list" = "$SERVNAME" ] ; then
-	list_services
-	exit
+        list_services
+        exit
     fi
 
 }
