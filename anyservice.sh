@@ -270,6 +270,7 @@ start_service()
 {
     create_monit_file
     monit_wrap start
+    sleep 1
     monit_wrap monitor
 }
 
@@ -283,6 +284,8 @@ restart_service()
     is_monited || fatal "Service $SERVNAME is stopped, skipping"
     create_monit_file
     monit_wrap restart
+    # without pause here will ignores prev. command restart (see eterbug #11688)
+    sleep 2
     monit_wrap monitor
 }
 
