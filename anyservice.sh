@@ -3,6 +3,7 @@ MYNAMEIS="anyservice"
 MONITDIR="/etc/monit.d"
 SERVDIR="/etc/$MYNAMEIS"
 INITDIR=/etc/init.d
+ETCSYSTEMDDIR="/etc/systemd/system"
 SYSTEMDDIR="/lib/systemd/system"
 # for Fedora based
 [ -d "$SYSTEMDDIR" ] || SYSTEMDDIR="/usr/lib/systemd/system"
@@ -220,6 +221,17 @@ serv_stopd()
     fi
 }
 
+# print out full path to the service file
+get_systemd_service_file()
+{
+    local SERVNAME="$1"
+    local SERVFILE=$SYSTEMDDIR/$SERVNAME.service
+    [ -r "$SERVFILE" ] && echo "$SERVFILE" && return
+    SERVFILE=$ETCSYSTEMDDIR/$SERVNAME.service
+    [ -r "$SERVFILE" ] && echo "$SERVFILE" && return
+    return 1
+}
+
 # NOTE: false positive on systems with systemd
 # check if the service is handled by anyservice
 serv_checkd()
@@ -234,7 +246,8 @@ serv_checkd()
     [ -r "$SERVFILE.off" ] && return 0
 
     # yes, the service can be anyservice driven
-    [ -r "$SYSTEMDDIR/$SERVNAME.service" ] && return 0
+    get_systemd_service_file $SERVNAME >/dev/null && return 0
+
     return 1
 }
 
@@ -317,7 +330,8 @@ on_service()
         if [ -e ${SERVFILE}.off ] ; then
             mv -v ${SERVFILE}.off ${SERVFILE}
         else
-            ln -s "$SYSTEMDDIR/${SERVNAME}.service" "$SERVFILE" || fatal "Can't enable $SYSTEMDDIR/$1"
+            local SF="$(get_systemd_service_file $SERVNAME)" || fatal "Can't find system service file for $SERVNAME service"
+            ln -s "$SF" "$SERVFILE" || fatal "Can't enable $SERVNAME"
         fi
     fi
 
@@ -432,7 +446,7 @@ help()
     echo "Create service from program and control their process"
     echo ""
     echo "example: put service file to ${SERVDIR}/example.service and run # $SCRIPTNAME example start"
-    echo "example: put service file to $SYSTEMDDIR/example.service and run # $SCRIPTNAME example on"
+    echo "example: put service file to $ETCSYSTEMDDIR/example.service and run # $SCRIPTNAME example on"
     echo "example: $SCRIPTNAME <list> - list of services"
     echo "example: $SCRIPTNAME --help - print this help"
     echo ""
