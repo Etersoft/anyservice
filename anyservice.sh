@@ -1,6 +1,11 @@
 #!/bin/bash
 MYNAMEIS="anyservice"
 MONITDIR="/etc/monit.d"
+MONITEXT=""
+if [ -d "/etc/monitrc.d" ] ; then
+    MONITDIR=/etc/monitrc.d
+    MONITEXT=".conf"
+fi
 SERVDIR="/etc/$MYNAMEIS"
 INITDIR=/etc/init.d
 ETCSYSTEMDDIR="/etc/systemd/system"
@@ -466,7 +471,7 @@ init_serv()
 
     SERVFILE="$SERVDIR/${SERVNAME}.service"
     MONITSERVNAME="$MYNAMEIS-${SERVNAME}"
-    MONITFILE="$MONITDIR/$MONITSERVNAME"
+    MONITFILE="$MONITDIR/$MONITSERVNAME$MONITEXT"
 
     #TODO remove hack for some operation 
     if [ "list" = "$SERVNAME" ] ; then
