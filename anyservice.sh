@@ -84,8 +84,14 @@ check_conf()
         User=root
     fi
 
+    if [ ! -s "$PIDFile" ] ; then
+        #info "PID file $PIDFile is not exists"
+        # just skip, it is possible we before first run
+        return
+    fi
+
     MAINPID=$(cat $PIDFile)
-    if [ -z "$ExecReload" ] ; then
+    if [ -z "$ExecReload" ] && [ -n "$MAINPID" ] ; then
         ExecReload="/bin/kill -HUP $MAINPID"
     fi
 
