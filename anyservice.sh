@@ -473,12 +473,6 @@ init_serv()
     MONITSERVNAME="$MYNAMEIS-${SERVNAME}"
     MONITFILE="$MONITDIR/$MONITSERVNAME$MONITEXT"
 
-    #TODO remove hack for some operation 
-    if [ "list" = "$SERVNAME" ] ; then
-        list_services
-        exit
-    fi
-
 }
 
 QUIET=
@@ -498,7 +492,14 @@ case "$1" in
         exit
 esac
 
+# hack for list
+if [ "list" = "$1" ] ; then
+    list_services
+    exit
+fi
+
 #TODO rewrite for start from my_getopts $2
 init_serv "$1"
 shift
+
 check_internal_command "$@"
