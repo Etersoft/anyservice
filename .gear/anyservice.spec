@@ -1,5 +1,5 @@
 Name: anyservice
-Version: 0.8
+Version: 0.9
 Release: alt1
 
 Summary: Anyservice - scripts for making systemd like service from any programs
@@ -48,6 +48,11 @@ cp %name.sh %buildroot/%_bindir/%name
 %dir /var/log/%name/
 
 %changelog
+* Fri Nov 24 2017 Vitaly Lipatov <lav@altlinux.ru> 0.9-alt1
+- anyservice.sh: drop warning about missed pid file on first start
+- add support for /etc/monitrc.d/*.conf
+- move list command handling to base part
+
 * Tue Nov 14 2017 Vitaly Lipatov <lav@altlinux.ru> 0.8-alt1
 - add support for /etc/systemd/system place for service files
 
