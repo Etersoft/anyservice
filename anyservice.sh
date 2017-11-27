@@ -232,6 +232,26 @@ serv_stopd()
     fi
 }
 
+serv_statusd()
+{
+    read_service_info || exit
+
+    if [ ! -s "$PIDFile" ] ; then
+        fatal "No PIDFile '$PIDFile'"
+    fi
+
+    /sbin/start-stop-daemon --stop --test --pidfile $PIDFile \
+        --user $User >/dev/null
+    #    --exec $FULLSCRIPTPATH --name 
+    if [ $? -eq 0 ]; then
+        echo "service $SERVNAME is running"
+        return 0
+    fi
+    if [ -n "$PIDFILE" -a -f "$PIDFILE" ]; then
+        fatal "service $SERVNAME is dead, but stale PID file $PIDFILE exists"
+    fi
+}
+
 # print out full path to the service file
 get_systemd_service_file()
 {
@@ -327,8 +347,11 @@ summary_service()
 
 status_service()
 {
+    #echo "service $SERVNAME status"
+    serv_statusd
+    echo
     echo "monit status $MONITSERVNAME"
-    #TODO check
+    # TODO: add status (depends on type of system)
     [ -s "$MONITFILE" ] || fatal "Service $SERVNAME is not scheduled"
     monit status | grep -A20 $MONITSERVNAME|grep -B20 'data collected' -m1
 }
@@ -418,6 +441,9 @@ check_internal_command()
             ;;
          stopd)
             serv_stopd
+            ;;
+         statusd)
+            serv_statusd
             ;;
          checkd)
             serv_checkd
