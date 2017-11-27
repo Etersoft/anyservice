@@ -500,10 +500,6 @@ check_internal_command()
 {
     # first check for internal calls
     case "$1" in
-         prestartd)
-            shift
-            prestartd_service "$@"
-            ;;
          startd)
             serv_startd
             ;;
@@ -520,9 +516,12 @@ check_internal_command()
             serv_isautostarted
             ;;
          *)
-            check_user_command "$@"
+            return
             ;;
     esac
+
+    # exit here if handled
+    exit
 }
 
 
@@ -570,6 +569,8 @@ init_serv()
 
 }
 
+check_args()
+{
 QUIET=
 if [ "$1" = "--quiet" ] ; then
     QUIET=1
@@ -578,23 +579,31 @@ fi
 
 if [ -z "$1" ]; then
     help
-    exit 1
+    return 1
 fi
 
 case "$1" in
     --help|-h|help)
         help
-        exit
+        return
+        ;;
+    list)
+        list_services
+        return
+        ;;
+    prestartd)
+        shift
+        prestartd_service "$@"
+        return
+        ;;
 esac
 
-# hack for list
-if [ "list" = "$1" ] ; then
-    list_services
-    exit
-fi
-
-#TODO rewrite for start from my_getopts $2
 init_serv "$1"
 shift
 
-check_internal_command "$@"
+check_internal_command "$@"  # will exit if handled
+check_user_command "$@"
+
+}
+
+check_args "$@"
