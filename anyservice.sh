@@ -240,8 +240,8 @@ serv_startd()
     read_service_info || exit
 
     # FIXME: need we use chown for pid if we under root?
-    touch $PIDFile
-    chown $User $PIDFile
+    #touch $PIDFile
+    #chown $User $PIDFile
 
     # TODO: make it better?
     TMPDIR=/tmp
@@ -285,8 +285,24 @@ serv_startd()
     elif [ "$STARTMETHOD" = "functions-daemon" ] ; then
         . /etc/init.d/functions
         # [--group=GROUP]
-        daemon --user=$User --pidfile=$PIDFile --detach \
-            $FULLSCRIPTPATH prestartd $WorkingDirectory $EXECSTART 2>&1 | tee -a $LOGDIR/$SERVNAME.log
+        # note: Broken mind detected: it use pidfile only for checking, and can't daemonize really
+        daemon --user=$User --pidfile=$PIDFile \
+            --check $SERVNAME \
+            $FULLSCRIPTPATH prestartd --daemonize $WorkingDirectory $EXECSTART 2>&1 | tee -a $LOGDIR/$SERVNAME.log
+        # hack to wait start process
+        sleep 1
+        # if the service did not write pid file
+        if [ ! -s "$PIDFile" ] ; then
+            local pid
+            pid="$(__pids_pidof $(__get_program_path "$EXECSTART"))"
+            # it is possible pidof already check for local executable
+            # from virt-what
+            #if [ -d "/proc/vz" -a ! -d "/proc/bc" ]; then
+            #    # OpenVZ host system
+            #    pid=$(vzpid $pid | grep -P "\t0\t" | cut -f1)
+            #fi
+            echo "$pid" >$PIDFile
+        fi
     else
         fatal "Unsupported system"
     fi
@@ -328,7 +344,7 @@ serv_statusd()
         fi
     elif [ "$STARTMETHOD" = "functions-daemon" ] ; then
             . /etc/init.d/functions
-            status -p "$PIDFile" $SERVNAME
+            status -p "$PIDFile" $SERVNAME && return
     fi
 
     if [ -n "$PIDFile" ] && [ -f "$PIDFile" ]; then
