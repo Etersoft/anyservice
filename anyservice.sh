@@ -131,7 +131,7 @@ need_update_file()
     elif [ "$1" -nt "$2" ] && is_auto_created $2 ; then
         return 0
     else
-        is_auto_created $2 || fatal "File $2 changed by human. Please, remote it manually"
+        is_auto_created $2 || fatal "File $2 changed by human. Please, remove it manually"
         return 1
     fi
 }
@@ -173,7 +173,7 @@ remove_monit_file()
 # FIXME: обычно это пишется в начале файла, а не в конце
 is_auto_created()
 {
-    [ "`tail -n 1 $1`" = "$AUTOSTRING" ]
+    grep -q "$AUTOSTRING" "$1"
 }
 
 # Get home dir path by User name
@@ -271,7 +271,7 @@ serv_stopd()
             fatal "Unsupported system"
         fi
     else
-        fatal "No PIDFile '$PIDFile'"
+        fatal "No PID file '$PIDFile'"
     fi
 }
 
@@ -280,7 +280,7 @@ serv_statusd()
     read_service_info || exit
 
     if [ ! -s "$PIDFile" ] ; then
-        fatal "No PIDFile '$PIDFile'"
+        fatal "No PID file '$PIDFile'"
     fi
 
     if [ "$STARTMETHOD" = "/sbin/start-stop-daemon" ] ; then
