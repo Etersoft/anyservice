@@ -12,7 +12,6 @@ ETCSYSTEMDDIR="/etc/systemd/system"
 SYSTEMDDIR="/lib/systemd/system"
 # for Fedora based
 [ -d "$SYSTEMDDIR" ] || SYSTEMDDIR="/usr/lib/systemd/system"
-SCRIPTNAME="$(basename $0)"
 RUNDIR="/var/run/$MYNAMEIS"
 LOGDIR="/var/log/$MYNAMEIS"
 
@@ -22,7 +21,9 @@ VERBOSE=false
 MYSCRIPTDIR=$(dirname "$0")
 [ "$MYSCRIPTDIR" = "." ] && MYSCRIPTDIR="$(pwd)"
 
+SCRIPTNAME="$(basename $0)"
 FULLSCRIPTPATH=$MYSCRIPTDIR/$SCRIPTNAME
+
 AUTOSTRING="#The file has been created automatically with $FULLSCRIPTPATH"
 
 fatal()
@@ -65,6 +66,7 @@ check_conf()
 {
     if [ -z "$PIDFile" ] ; then
         #TODO check permission for $User
+        # TODO: put in /var/run/ by default
         PIDFile=$RUNDIR/"${SERVNAME}.pid"
         #PIDFile=/tmp/"${SERVNAME}.pid"
     fi
@@ -189,12 +191,24 @@ serv_startd()
 {
     read_service_info || exit
 
+    # TODO: CentOS
+    # . /etc/init.d/functions
+    # daemon [ --user=USER ] [--group=GROUP] [--pidfile=PIDFILE] --detach program [arguments]
+    # status program
+    # killproc [ -p $PIDFILE] program
+
+    if [ -x /sbin/start-stop-daemon ] ; then
+        fatal "Sorry, only /sbin/start-stop-daemon is supported"
+    fi
+
+    # FIXME: need we use chown for pid if we under root?
     touch $PIDFile
     chown $User $PIDFile
 
     # TODO: make it better?
     TMPDIR=/tmp
     HOME=$(get_home_dir $User)
+    # Is we use that?
 
     # Expand all variables
     if [ -n "$EnvironmentFile" ] ; then
@@ -213,10 +227,20 @@ serv_startd()
     # HACK: due strange problem with vars evaluation
     local EXECSTART=$(eval echo "$ExecStart")
 
+
+    # TODO: write all stdout/stderr to log file, not start-stop-daemon output
     # run via ourself script as wrapper
+
+    # --help for /sbin/start-stop-daemon
+    #  -b|--background               force the process to detach
+    #  -c|--chuid <name|uid[:group|gid]> change to this user/group before starting process
+    #  -m|--make-pidfile             create the pidfile before starting
+
+    # Note: run with prestartd for change working dir
     /sbin/start-stop-daemon --start --pidfile $PIDFile --background \
-        --make-pidfile -c $User --exec $FULLSCRIPTPATH --startas $FULLSCRIPTPATH \
-        -- $SERVNAME prestartd $WorkingDirectory $EXECSTART 2>&1 | tee -a $LOGDIR/$SERVNAME.log
+        --make-pidfile --chuid $User \
+        --exec $FULLSCRIPTPATH --startas $FULLSCRIPTPATH -- \
+        $SERVNAME prestartd $WorkingDirectory $EXECSTART 2>&1 | tee -a $LOGDIR/$SERVNAME.log
 
     #ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
 }
@@ -226,6 +250,7 @@ serv_stopd()
     read_service_info || exit
 
     if [ -s "$PIDFile" ] ; then
+        # TODO: --user
         /sbin/start-stop-daemon --stop --pidfile $PIDFile
     else
         fatal "No PIDFile '$PIDFile'"
