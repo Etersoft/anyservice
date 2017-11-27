@@ -15,6 +15,16 @@ SYSTEMDDIR="/lib/systemd/system"
 RUNDIR="/var/run/$MYNAMEIS"
 LOGDIR="/var/log/$MYNAMEIS"
 
+STARTMETHOD=''
+if [ -x /sbin/start-stop-daemon ] ; then
+    STARTMETHOD="/sbin/start-stop-daemon"
+else
+    if grep -q "^daemon()" "/etc/init.d/functions" && [ -s /etc/init.d/functions ]; then
+        # We believe it is RHEL/CentOS/Fedora
+        STARTMETHOD="functions-daemon"
+    fi
+fi
+
 # TODO: allow change it
 VERBOSE=false
 
@@ -191,16 +201,6 @@ serv_startd()
 {
     read_service_info || exit
 
-    # TODO: CentOS
-    # . /etc/init.d/functions
-    # daemon [ --user=USER ] [--group=GROUP] [--pidfile=PIDFILE] --detach program [arguments]
-    # status program
-    # killproc [ -p $PIDFILE] program
-
-    if [ -x /sbin/start-stop-daemon ] ; then
-        fatal "Sorry, only /sbin/start-stop-daemon is supported"
-    fi
-
     # FIXME: need we use chown for pid if we under root?
     touch $PIDFile
     chown $User $PIDFile
@@ -231,6 +231,8 @@ serv_startd()
     # TODO: write all stdout/stderr to log file, not start-stop-daemon output
     # run via ourself script as wrapper
 
+    if [ "$STARTMETHOD" = "/sbin/start-stop-daemon" ] ; then
+
     # --help for /sbin/start-stop-daemon
     #  -b|--background               force the process to detach
     #  -c|--chuid <name|uid[:group|gid]> change to this user/group before starting process
@@ -242,6 +244,14 @@ serv_startd()
         --exec $FULLSCRIPTPATH --startas $FULLSCRIPTPATH -- \
         $SERVNAME prestartd $WorkingDirectory $EXECSTART 2>&1 | tee -a $LOGDIR/$SERVNAME.log
 
+    elif [ "$STARTMETHOD" = "functions-daemon" ] ; then
+        . /etc/init.d/functions
+        # [--group=GROUP]
+        daemon --user=$User --pidfile=$PIDFile --detach \
+            $FULLSCRIPTPATH prestartd $WorkingDirectory $EXECSTART 2>&1 | tee -a $LOGDIR/$SERVNAME.log
+    else
+        fatal "Unsupported system"
+    fi
     #ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
 }
 
@@ -250,8 +260,16 @@ serv_stopd()
     read_service_info || exit
 
     if [ -s "$PIDFile" ] ; then
-        /sbin/start-stop-daemon --stop --pidfile $PIDFile \
-           --user "$User"
+
+        if [ "$STARTMETHOD" = "/sbin/start-stop-daemon" ] ; then
+            /sbin/start-stop-daemon --stop --pidfile $PIDFile \
+               --user "$User"
+        elif [ "$STARTMETHOD" = "functions-daemon" ] ; then
+            . /etc/init.d/functions
+            killproc -p $PIDFile $SERVNAME
+        else
+            fatal "Unsupported system"
+        fi
     else
         fatal "No PIDFile '$PIDFile'"
     fi
@@ -265,13 +283,19 @@ serv_statusd()
         fatal "No PIDFile '$PIDFile'"
     fi
 
-    /sbin/start-stop-daemon --stop --test --pidfile $PIDFile \
-        --user $User >/dev/null
-    #    --exec $FULLSCRIPTPATH --name 
-    if [ $? -eq 0 ]; then
-        echo "service $SERVNAME is running"
-        return 0
+    if [ "$STARTMETHOD" = "/sbin/start-stop-daemon" ] ; then
+        /sbin/start-stop-daemon --stop --test --pidfile $PIDFile \
+            --user $User >/dev/null
+        #    --exec $FULLSCRIPTPATH --name
+        if [ $? -eq 0 ]; then
+            echo "service $SERVNAME is running"
+            return 0
+        fi
+    elif [ "$STARTMETHOD" = "functions-daemon" ] ; then
+            . /etc/init.d/functions
+            status -p $PIDFile $SERVNAME
     fi
+
     if [ -n "$PIDFILE" -a -f "$PIDFILE" ]; then
         fatal "service $SERVNAME is dead, but stale PID file $PIDFILE exists"
     fi
