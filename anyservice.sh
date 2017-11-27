@@ -183,6 +183,11 @@ monit_reload
 
 }
 
+__get_program_path()
+{
+    echo "$1"
+}
+
 remove_monit_file()
 {
     # remove from monit
@@ -210,13 +215,24 @@ get_home_dir()
 # Change dir to $1 and really run programm from $2
 prestartd_service()
 {
+    local DAEMONIZE=''
+    if [ "$1" = "--daemonize" ] ; then
+        DAEMONIZE="$1"
+        shift
+    fi
+
     #umask 0002
     mkdir -p "$1" || fatal "Can't create dir $1"
     cd "$1" || fatal "Can't change dir $1"
     #export HOME=$2
     shift
 
-    exec "$@"
+    if [ -n "$DAEMONIZE" ] ; then
+        # instead nohup
+        exec "$@" </dev/null >/dev/null 2>/dev/null &
+    else
+        exec "$@"
+    fi
 }
 
 serv_startd()
