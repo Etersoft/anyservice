@@ -1,5 +1,5 @@
-#!/bin/bash
-# 
+#!/bin/sh
+#
 # The MIT License (MIT)
 #  Copyright (c) 2015-2017 Etersoft
 #  Copyright (c) 2015-2016 Daniil Mikhailov <danil@etersoft.ru>
@@ -25,11 +25,11 @@ MYNAMEIS="anyservice"
 MONITDIR="/etc/monit.d"
 MONITEXT=""
 if [ ! -L "$MONITDIR" ] && [ -d "/etc/monitrc.d" ] ; then
-    MONITDIR=/etc/monitrc.d
+    MONITDIR="/etc/monitrc.d"
     MONITEXT=".conf"
 fi
 SERVDIR="/etc/$MYNAMEIS"
-INITDIR=/etc/init.d
+INITDIR="/etc/init.d"
 ETCSYSTEMDDIR="/etc/systemd/system"
 SYSTEMDDIR="/lib/systemd/system"
 # for Fedora based
@@ -53,7 +53,7 @@ VERBOSE=false
 MYSCRIPTDIR=$(dirname "$0")
 [ "$MYSCRIPTDIR" = "." ] && MYSCRIPTDIR="$(pwd)"
 
-SCRIPTNAME="$(basename $0)"
+SCRIPTNAME="$(basename "$0")"
 FULLSCRIPTPATH=$MYSCRIPTDIR/$SCRIPTNAME
 
 AUTOSTRING="#The file has been created automatically with $FULLSCRIPTPATH"
@@ -77,7 +77,7 @@ read_config()
 
     #TODO check that last file line is empty or add line !!!
 
-    while IFS='=' read varname var ; do
+    while IFS='=' read -r varname var ; do
         case "$varname" in
             User) User="$var" ;;
             WorkingDirectory) WorkingDirectory="$var" ;;
@@ -301,25 +301,22 @@ serv_statusd()
 {
     read_service_info || exit
 
-    if [ ! -s "$PIDFile" ] ; then
-        fatal "No PID file '$PIDFile'"
-    fi
-
     if [ "$STARTMETHOD" = "/sbin/start-stop-daemon" ] ; then
-        /sbin/start-stop-daemon --stop --test --pidfile $PIDFile \
+        /sbin/start-stop-daemon --stop --test --pidfile "$PIDFile" \
             --user $User >/dev/null
         #    --exec $FULLSCRIPTPATH --name
+        # shellcheck disable=SC2181
         if [ $? -eq 0 ]; then
             echo "service $SERVNAME is running"
             return 0
         fi
     elif [ "$STARTMETHOD" = "functions-daemon" ] ; then
             . /etc/init.d/functions
-            status -p $PIDFile $SERVNAME
+            status -p "$PIDFile" $SERVNAME
     fi
 
-    if [ -n "$PIDFILE" -a -f "$PIDFILE" ]; then
-        fatal "service $SERVNAME is dead, but stale PID file $PIDFILE exists"
+    if [ -n "$PIDFile" ] && [ -f "$PIDFile" ]; then
+        fatal "service $SERVNAME is dead, but stale PID file $PIDFile exists"
     fi
 }
 
@@ -540,8 +537,9 @@ list_services()
 
     for i in ${SERVDIR}/*.service ; do
         [ -s "$i" ] || continue
-        echo "$(basename $i .service)"
+        basename "$i" .service
         [ -n "$QUIET" ] && continue
+        # shellcheck disable=SC2002
         cat "$i" | grep "$description_string" | sed "s/$description_string/ /g"
         echo ""
     done
@@ -564,7 +562,7 @@ init_serv()
 {
     SERVNAME="$1"
 
-    mkdir -vp $SERVDIR $LOGDIR $RUNDIR &> /dev/null
+    mkdir -vp $SERVDIR $LOGDIR $RUNDIR 2>/dev/null >/dev/null
 
     SERVFILE="$SERVDIR/${SERVNAME}.service"
     MONITSERVNAME="$MYNAMEIS-${SERVNAME}"
