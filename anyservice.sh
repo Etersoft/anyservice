@@ -34,7 +34,10 @@ ETCSYSTEMDDIR="/etc/systemd/system"
 SYSTEMDDIR="/lib/systemd/system"
 # for Fedora based
 [ -d "$SYSTEMDDIR" ] || SYSTEMDDIR="/usr/lib/systemd/system"
-RUNDIR="/var/run/$MYNAMEIS"
+
+RUNDIR="/var/run"
+
+# TODO: write correct log
 LOGDIR="/var/log/$MYNAMEIS"
 
 STARTMETHOD=''
@@ -96,12 +99,7 @@ read_config()
 # Improve params
 check_conf()
 {
-    if [ -z "$PIDFile" ] ; then
-        #TODO check permission for $User
-        # TODO: put in /var/run/ by default
-        PIDFile=$RUNDIR/"${SERVNAME}.pid"
-        #PIDFile=/tmp/"${SERVNAME}.pid"
-    fi
+    [ -n "$PIDFile" ] || PIDFile="$RUNDIR/${SERVNAME}.pid"
 
     #TODO it needed or restart monit always?
     #if exist restart var enable monit restart 
