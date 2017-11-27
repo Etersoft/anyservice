@@ -2,7 +2,7 @@
 MYNAMEIS="anyservice"
 MONITDIR="/etc/monit.d"
 MONITEXT=""
-if [ -d "/etc/monitrc.d" ] ; then
+if [ ! -L "$MONITDIR" ] && [ -d "/etc/monitrc.d" ] ; then
     MONITDIR=/etc/monitrc.d
     MONITEXT=".conf"
 fi
