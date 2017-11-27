@@ -250,8 +250,8 @@ serv_stopd()
     read_service_info || exit
 
     if [ -s "$PIDFile" ] ; then
-        # TODO: --user
-        /sbin/start-stop-daemon --stop --pidfile $PIDFile
+        /sbin/start-stop-daemon --stop --pidfile $PIDFile \
+           --user "$User"
     else
         fatal "No PIDFile '$PIDFile'"
     fi
