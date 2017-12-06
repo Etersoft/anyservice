@@ -278,8 +278,7 @@ serv_startd()
     /sbin/start-stop-daemon --start --pidfile $PIDFile --background \
         --make-pidfile --chuid $User \
         --exec $FULLSCRIPTPATH --startas $FULLSCRIPTPATH -- \
-        $SERVNAME prestartd $WorkingDirectory $EXECSTART 2>&1 | tee -a $LOGDIR/$SERVNAME.log
-
+        prestartd $WorkingDirectory $EXECSTART
     elif [ "$STARTMETHOD" = "functions-daemon" ] ; then
         . /etc/init.d/functions
         # [--group=GROUP]
