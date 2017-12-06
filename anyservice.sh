@@ -283,16 +283,17 @@ serv_startd()
         --make-pidfile --chuid $User \
         --exec $FULLSCRIPTPATH --startas $FULLSCRIPTPATH -- \
         prestartd $WorkingDirectory $EXECSTART
+    exit
     elif [ "$STARTMETHOD" = "functions-daemon" ] ; then
         . /etc/init.d/functions
         # [--group=GROUP]
         # note: Broken mind detected: it use pidfile only for checking, and can't daemonize really
         daemon --user=$User --pidfile=$PIDFile \
             --check $SERVNAME \
-            $FULLSCRIPTPATH prestartd --daemonize $WorkingDirectory $EXECSTART 2>&1 | tee -a $LOGDIR/$SERVNAME.log
-        # hack to wait start process
+            $FULLSCRIPTPATH prestartd --daemonize $WorkingDirectory $EXECSTART || fatal
+        # hack to wait start process succesfully
         sleep 1
-        # if the service did not write pid file
+        # HACK: if the service did not write pid file
         if [ ! -s "$PIDFile" ] ; then
             local pid
             pid="$(__pids_pidof $(__get_program_path "$EXECSTART"))"
