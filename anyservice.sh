@@ -238,9 +238,9 @@ serv_startd()
 {
     read_service_info || exit
 
-    # FIXME: need we use chown for pid if we under root?
-    #touch $PIDFile
-    #chown $User $PIDFile
+    # start-stop-daemon creates pidfile after chuid!
+    touch "$PIDFile"
+    chown "$User" "$PIDFile"
 
     # TODO: make it better?
     TMPDIR=/tmp
