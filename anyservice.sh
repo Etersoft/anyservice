@@ -207,10 +207,8 @@ get_home_dir()
     getent passwd "$1" | cut -d: -f6
 }
 
-#=============== stop and start section ==========================
-# *d command really start serv, without d run command over monit
-
-# Change dir to $1 and really run programm from $2
+# Wrapper to enable change dir and daemonize
+# args: [--daemonize] work_dir command_line
 prestartd_service()
 {
     local DAEMONIZE=''
@@ -232,6 +230,9 @@ prestartd_service()
         exec "$@"
     fi
 }
+
+#=============== stop and start section ==========================
+# *d command really start serv, without d run command over monit
 
 serv_startd()
 {
@@ -274,6 +275,9 @@ serv_startd()
     #  -c|--chuid <name|uid[:group|gid]> change to this user/group before starting process
     #  -m|--make-pidfile             create the pidfile before starting
 
+    # TODO: use --background && --make-pidfile only for that case
+    # TODO: how we know if subprocess can create pidfile
+
     # Note: run with prestartd for change working dir
     /sbin/start-stop-daemon --start --pidfile $PIDFile --background \
         --make-pidfile --chuid $User \
@@ -301,7 +305,7 @@ serv_startd()
             echo "$pid" >$PIDFile
         fi
     else
-        fatal "Unsupported system"
+        fatal "Unsupported init script system"
     fi
     #ps aux | grep -m1 "^${User}.*${ExecStart}" | awk '{print $2}' > $PIDFile
 }
