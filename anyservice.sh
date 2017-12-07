@@ -220,7 +220,6 @@ prestartd_service()
     #umask 0002
     mkdir -p "$1" || fatal "Can't create dir $1"
     cd "$1" || fatal "Can't change dir $1"
-    #export HOME=$2
     shift
 
     if [ -n "$DAEMONIZE" ] ; then
@@ -242,9 +241,15 @@ serv_startd()
     touch "$PIDFile"
     chown "$User" "$PIDFile"
 
+    # systemd env compatibility
     # TODO: make it better?
-    TMPDIR=/tmp
-    HOME=$(get_home_dir $User)
+    # TODO: check it passed under user
+    export TMPDIR=/tmp
+    export HOME=$(get_home_dir $User)
+    # TODO: get from getent
+    export SHELL=/bin/sh
+    export USER=$User
+    export LOGNAME=$User
     # Is we use that?
 
     # Expand all variables
