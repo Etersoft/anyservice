@@ -293,7 +293,7 @@ serv_startd()
         . /etc/init.d/functions
         # [--group=GROUP]
         # note: Broken mind detected: it use pidfile only for checking, and can't daemonize really
-        daemon --user=$User --pidfile=$PIDFile \
+        a= daemon --user=$User --pidfile=$PIDFile \
             --check $SERVNAME \
             $FULLSCRIPTPATH prestartd --daemonize $WorkingDirectory $EXECSTART || fatal
         # hack to wait start process succesfully
@@ -327,7 +327,7 @@ serv_stopd()
                --user "$User"
         elif [ "$STARTMETHOD" = "functions-daemon" ] ; then
             . /etc/init.d/functions
-            killproc -p $PIDFile $SERVNAME
+            a= killproc -p $PIDFile $SERVNAME
         else
             fatal "Unsupported system"
         fi
@@ -351,7 +351,7 @@ serv_statusd()
         fi
     elif [ "$STARTMETHOD" = "functions-daemon" ] ; then
             . /etc/init.d/functions
-            status -p "$PIDFile" $SERVNAME && return
+            a= status -p "$PIDFile" $SERVNAME && return
     fi
 
     if [ -n "$PIDFile" ] && [ -f "$PIDFile" ]; then
