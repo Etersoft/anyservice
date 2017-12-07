@@ -211,12 +211,14 @@ get_home_dir()
 # args: [--daemonize] work_dir command_line
 prestartd_service()
 {
+    # TODO: use separate func
     local DAEMONIZE=''
     if [ "$1" = "--daemonize" ] ; then
         DAEMONIZE="$1"
         shift
     fi
 
+    # TODO: umask
     #umask 0002
     mkdir -p "$1" || fatal "Can't create dir $1"
     cd "$1" || fatal "Can't change dir $1"
@@ -250,6 +252,7 @@ serv_startd()
     export SHELL=/bin/sh
     export USER=$User
     export LOGNAME=$User
+
     # Is we use that?
 
     # Expand all variables
