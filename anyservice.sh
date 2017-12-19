@@ -334,6 +334,7 @@ serv_stopd()
         else
             fatal "Unsupported system"
         fi
+        rm -f $PIDFile
     else
         fatal "No PID file '$PIDFile'"
     fi
