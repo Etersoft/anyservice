@@ -365,10 +365,17 @@ serv_statusd()
 # print out full path to the service file
 get_systemd_service_file()
 {
+    local SERVFILE
     local SERVNAME="$1"
-    local SERVFILE=$SYSTEMDDIR/$SERVNAME.service
-    [ -r "$SERVFILE" ] && echo "$SERVFILE" && return
+    # TODO copy instead link?
+    # TODO: use override from $ETCSYSTEMDDIR/$SERVNAME.service.d/*.conf
+
+    # check etc firstly
     SERVFILE=$ETCSYSTEMDDIR/$SERVNAME.service
+    [ -r "$SERVFILE" ] && echo "$SERVFILE" && return
+
+    # check /lib at last
+    SERVFILE=$SYSTEMDDIR/$SERVNAME.service
     [ -r "$SERVFILE" ] && echo "$SERVFILE" && return
     return 1
 }
