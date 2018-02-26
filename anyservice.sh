@@ -1,9 +1,9 @@
 #!/bin/sh
 #
 # The MIT License (MIT)
-#  Copyright (c) 2015-2017 Etersoft
+#  Copyright (c) 2015-2018 Etersoft
 #  Copyright (c) 2015-2016 Daniil Mikhailov <danil@etersoft.ru>
-#  Copyright (c) 2016-2017 Vitaly Lipatov <lav@etersoft.ru>
+#  Copyright (c) 2016-2018 Vitaly Lipatov <lav@etersoft.ru>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -83,7 +83,10 @@ read_config()
     while IFS='=' read -r varname var ; do
         case "$varname" in
             User) User="$var" ;;
+            Group) Group="$var" ;;
             WorkingDirectory) WorkingDirectory="$var" ;;
+            RuntimeDirectory) RuntimeDirectory="$var" ;;
+            RuntimeDirectoryMode) RuntimeDirectoryMode="$var" ;;
             EnvironmentFile) EnvironmentFile="$var" ;;
             Environment) Environment="$var" ;;
             ExecStart) ExecStart="$var" ;;
@@ -99,7 +102,7 @@ read_config()
 # Improve params
 check_conf()
 {
-    [ -n "$PIDFile" ] || PIDFile="$RUNDIR/${SERVNAME}.pid"
+    local i
 
     #TODO it needed or restart monit always?
     #if exist restart var enable monit restart 
@@ -115,11 +118,32 @@ check_conf()
         WorkingDirectory="/tmp"
     fi
 
+
 #TODO check whis && [ getent passwd "$User" ]
     if [ -z "$User" ] ; then
         info "User is not passed, uses root"
         User=root
     fi
+
+    if [ -z "$Group" ] ; then
+        info "Group is not passed, uses root"
+        Group=root
+    fi
+
+    [ -n "$RuntimeDirectoryMode" ] || RuntimeDirectoryMode=0755
+
+    # take a whitespace-separated list of directory names. The specified directory names must be relative
+    # specified directories will be owned by the user and group specified in User= and Group=.
+    if [ -n "$RuntimeDirectory" ] ; then
+        for i in $RuntimeDirectory ; do
+            mkdir -p -m $RuntimeDirectoryMode $RUNDIR/$i/
+            chown -R $User:$Group $RUNDIR/$i/
+            # hack for netdata service file: guess we will write pidfile in a defined runtime dir
+            [ -n "$PIDFile" ] || PIDFile="$RUNDIR/$i/${SERVNAME}.pid"
+        done
+    fi
+
+    [ -n "$PIDFile" ] || PIDFile="$RUNDIR/${SERVNAME}.pid"
 
     if [ ! -s "$PIDFile" ] ; then
         #info "PID file $PIDFile is not exists"
@@ -241,17 +265,17 @@ serv_startd()
 
     # start-stop-daemon creates pidfile after chuid!
     touch "$PIDFile"
-    chown "$User" "$PIDFile"
+    chown "$User:$Group" "$PIDFile"
 
     # systemd env compatibility
     # TODO: make it better?
     # TODO: check it passed under user
     export TMPDIR=/tmp
-    export HOME=$(get_home_dir $User)
+    export HOME=$(get_home_dir "$User")
     # TODO: get from getent
     export SHELL=/bin/sh
-    export USER=$User
-    export LOGNAME=$User
+    export USER="$User"
+    export LOGNAME="$User"
 
     # Is we use that?
 
