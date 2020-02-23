@@ -323,6 +323,7 @@ serv_startd()
         a= daemon --user=$User --pidfile=$PIDFile \
             --check $SERVNAME \
             $FULLSCRIPTPATH prestartd --daemonize $WorkingDirectory $EXECSTART || fatal
+
         # hack to wait start process succesfully
         sleep 1
         # HACK: if the service did not write pid file
@@ -370,7 +371,8 @@ serv_statusd()
 
     if [ "$STARTMETHOD" = "/sbin/start-stop-daemon" ] ; then
         /sbin/start-stop-daemon --stop --test --pidfile "$PIDFile" \
-            --user $User >/dev/null
+            >/dev/null
+        # don't check user    --user $User
         #    --exec $FULLSCRIPTPATH --name
         # shellcheck disable=SC2181
         if [ $? -eq 0 ]; then
