@@ -10,3 +10,7 @@ https://github.com/Etersoft/eepm
 
 Install anyservice:
  # epm ei anyservice
+
+
+Simular projects:
+* https://github.com/kvaps/fake-systemd
