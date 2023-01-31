@@ -91,7 +91,9 @@ read_config()
             Environment) Environment="$var" ;;
             ExecStart) ExecStart="$var" ;;
             ExecReload) ExecReload="$var" ;;
+            Type) Type="$var" ;;
             Restart) Restart="$var" ;;
+            GuessMainPID) GuessMainPID="$var" ;;
             PIDFile) PIDFile="$var" ;;
         esac
     done < "$SERVFILE"
@@ -104,9 +106,7 @@ check_conf()
 {
     local i
 
-    #TODO it needed or restart monit always?
-    #if exist restart var enable monit restart 
-    if [ -n "$Restart" ] ; then
+    if ["$Restart" = "always" ] ; then
         MyRestart="if 5 restarts with 5 cycles then timeout"
     else
         MyRestart=""
@@ -132,6 +132,11 @@ check_conf()
 
     [ -n "$RuntimeDirectoryMode" ] || RuntimeDirectoryMode=0755
 
+    # TODO: if Type = simple, create own PIDFile
+
+    # TODO: do not use PIDFile if Type = simple
+    # https://bugzilla.redhat.com/show_bug.cgi?id=723942
+
     # take a whitespace-separated list of directory names. The specified directory names must be relative
     # specified directories will be owned by the user and group specified in User= and Group=.
     if [ -n "$RuntimeDirectory" ] ; then
@@ -139,7 +144,9 @@ check_conf()
             mkdir -p -m $RuntimeDirectoryMode $RUNDIR/$i/
             chown -R $User:$Group $RUNDIR/$i/
             # hack for netdata service file: guess we will write pidfile in a defined runtime dir
-            [ -n "$PIDFile" ] || PIDFile="$RUNDIR/$i/${SERVNAME}.pid"
+            # TODO: наверное, в случае Type=simple мы должны сами определять и записывать pid
+            # в чём проблема на telros?
+            #[ -n "$PIDFile" ] || PIDFile="$RUNDIR/$i/${SERVNAME}.pid"
         done
     fi
 
@@ -151,7 +158,7 @@ check_conf()
         return
     fi
 
-    MAINPID=$(cat $PIDFile)
+    MAINPID="$(cat "$PIDFile")"
     if [ -z "$ExecReload" ] && [ -n "$MAINPID" ] ; then
         ExecReload="/bin/kill -HUP $MAINPID"
     fi
