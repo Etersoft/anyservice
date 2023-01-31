@@ -1,5 +1,5 @@
 Name: anyservice
-Version: 1.4
+Version: 1.5
 Release: alt1
 
 Summary: Anyservice - scripts for making systemd like service from any programs
@@ -45,6 +45,10 @@ cp %name.sh %buildroot/%_bindir/%name
 %dir %_logdir/%name/
 
 %changelog
+* Tue Jan 31 2023 Vitaly Lipatov <lav@altlinux.ru> 1.5-alt1
+- skip check user of running process (will confused if there was drop privilegies)
+- some improvements for Type and PID
+
 * Mon Feb 26 2018 Vitaly Lipatov <lav@altlinux.ru> 1.4-alt1
 - add support for Group, RuntimeDirectory, RuntimeDirectoryMode
 
