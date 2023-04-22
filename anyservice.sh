@@ -106,7 +106,7 @@ check_conf()
 {
     local i
 
-    if ["$Restart" = "always" ] ; then
+    if [ "$Restart" = "always" ] ; then
         MyRestart="if 5 restarts with 5 cycles then timeout"
     else
         MyRestart=""
@@ -141,7 +141,8 @@ check_conf()
     # specified directories will be owned by the user and group specified in User= and Group=.
     if [ -n "$RuntimeDirectory" ] ; then
         for i in $RuntimeDirectory ; do
-            mkdir -p -m $RuntimeDirectoryMode $RUNDIR/$i/
+            mkdir -p $RUNDIR/$i/
+            chmod -v $RuntimeDirectoryMode $RUNDIR/$i/
             chown -R $User:$Group $RUNDIR/$i/
             # hack for netdata service file: guess we will write pidfile in a defined runtime dir
             # TODO: наверное, в случае Type=simple мы должны сами определять и записывать pid
@@ -179,10 +180,11 @@ need_update_file()
     #example: need_update_file serv monit #if monit older that serv return 0
     if [ ! -s "$2" ] ; then
         return 0
+    # FILE1 -nt FILE2 : FILE1 is newer (modification date) than FILE2
     elif [ "$1" -nt "$2" ] && is_auto_created $2 ; then
         return 0
     else
-        is_auto_created $2 || fatal "File $2 changed by human. Please, remove it manually"
+        is_auto_created $2 || fatal "File $2 changed by human. Please, remove it manuallyю"
         return 1
     fi
 }
@@ -278,7 +280,7 @@ serv_startd()
     # TODO: make it better?
     # TODO: check it passed under user
     export TMPDIR=/tmp
-    export HOME=$(get_home_dir "$User")
+    export HOME="$(get_home_dir "$User")"
     # TODO: get from getent
     export SHELL=/bin/sh
     export USER="$User"
@@ -301,7 +303,7 @@ serv_startd()
     [ -n "$Environment" ] && eval "$Environment"
 
     # HACK: due strange problem with vars evaluation
-    local EXECSTART=$(eval echo "$ExecStart")
+    local EXECSTART="$(eval echo "$ExecStart")"
 
 
     # TODO: write all stdout/stderr to log file, not start-stop-daemon output
@@ -336,7 +338,7 @@ serv_startd()
         # HACK: if the service did not write pid file
         if [ ! -s "$PIDFile" ] ; then
             local pid
-            pid="$(__pids_pidof $(__get_program_path "$EXECSTART"))"
+            pid="$(__pids_pidof "$(__get_program_path "$EXECSTART")")"
             # it is possible pidof already check for local executable
             # from virt-what
             #if [ -d "/proc/vz" -a ! -d "/proc/bc" ]; then
@@ -617,7 +619,7 @@ list_services()
         echo ""
     fi
 
-    for i in ${SERVDIR}/*.service ; do
+    for i in "${SERVDIR}"/*.service ; do
         [ -s "$i" ] || continue
         basename "$i" .service
         [ -n "$QUIET" ] && continue
